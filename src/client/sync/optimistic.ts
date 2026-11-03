@@ -9,6 +9,10 @@ import type { Data } from "../store/workspace";
  */
 export function applyOptimistic(data: Data, command: Command, memberId: string, now: number): Data {
   switch (command.name) {
+    case "comment.create":
+    case "comment.edit":
+    case "comment.delete":
+      return data;
     case "project.create": {
       const { id, key, name } = command.args;
       if (data.projects[id]) return data;

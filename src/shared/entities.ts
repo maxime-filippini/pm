@@ -81,6 +81,19 @@ export type Meeting = {
   attendeeIds: string[];
 };
 
+export const CommentTarget = z.object({ type: z.enum(["task", "feature"]), id: Id });
+export type CommentTarget = z.infer<typeof CommentTarget>;
+export type Comment = {
+  id: string;
+  targetType: CommentTarget["type"];
+  targetId: string;
+  authorId: string;
+  via: string | null;
+  body: string;
+  createdAt: number;
+  editedAt: number | null;
+};
+
 export type Activity = {
   id: string;
   at: number;
@@ -101,6 +114,7 @@ export type EntityMap = {
   topic: Topic;
   meeting: Meeting;
   activity: Activity;
+  comment: Comment;
 };
 export type EntityName = keyof EntityMap;
 

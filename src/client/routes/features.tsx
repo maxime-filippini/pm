@@ -1,3 +1,4 @@
+import { Comments } from "@/components/Comments";
 import { Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { FEATURE_STATUSES, type Feature, type FeatureStatus } from "../../shared/entities";
@@ -88,5 +89,6 @@ export function FeaturePage() {
       </form>}
       <TaskList>{linked.map((t) => <TaskCard key={t.id} slug={slug} project={project} task={t} />)}</TaskList>
     </section>
+    <Comments key={feature.id} target={{ type: "feature", id: feature.id }} />
   </div>;
 }

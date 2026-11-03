@@ -1,14 +1,18 @@
 import { z } from "zod";
-import { Id, ProjectKey, Rank, TaskStatus, FeatureStatus } from "./entities";
+import { Id, ProjectKey, Rank, TaskStatus, FeatureStatus, CommentTarget } from "./entities";
 
 const Title = z.string().trim().min(1, "Title is required").max(200);
 const Name = z.string().trim().min(1, "Name is required").max(100);
 const Description = z.string().max(20_000);
+const CommentBody = z.string().trim().min(1, "Comment body is required").max(20_000);
 const Outcome = z.string().trim().min(1, "Outcome is required").max(5_000);
 const TopicRef = z.object({ type: z.literal("task"), id: Id }).nullable();
 
 /** Every command the Workspace DO accepts (spec §6). The same set will back the API and MCP server. */
 export const commandSchemas = {
+  "comment.create": z.object({ id: Id, target: CommentTarget, body: CommentBody }),
+  "comment.edit": z.object({ id: Id, body: CommentBody }),
+  "comment.delete": z.object({ id: Id }),
   "project.create": z.object({ id: Id, key: ProjectKey, name: Name }),
   "project.rename": z.object({ id: Id, name: Name }),
   "project.archive": z.object({ id: Id }),

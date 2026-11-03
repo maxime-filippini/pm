@@ -1,3 +1,4 @@
+import { Comments } from "@/components/Comments";
 import { Link, Navigate, useCanGoBack, useNavigate, useParams, useRouter } from "@tanstack/react-router";
 import { EditableText } from "@/components/EditableText";
 import { TASK_STATUSES, type TaskStatus } from "../../shared/entities";
@@ -109,6 +110,7 @@ export function TaskPage() {
         />
       </Card>
 
+      <Comments key={task.id} target={{ type: "task", id: task.id }} />
       <p className="text-xs text-muted-foreground">
         Created by {creator} on {new Date(task.createdAt).toLocaleString()}
         {task.completedAt && ` · Done ${new Date(task.completedAt).toLocaleString()}`}

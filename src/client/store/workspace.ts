@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import type { Command } from "../../shared/commands";
-import type { Activity, Change, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
-import type { Snapshot } from "../../shared/protocol";
+import type { Activity, Comment, CommentTarget, Change, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
+import { commentChange, commentKey, commentPage, newCollection, projectComments, type CommentCollection } from "./comments";
+import type { CommentsPage, Snapshot } from "../../shared/protocol";
 import { applyOptimistic } from "../sync/optimistic";
 
 export type Data = {
@@ -29,6 +30,9 @@ type State = {
   view: Data;
   /** Loaded on demand (activity.list); live changes are applied only once loaded. */
   activity: Activity[] | null;
+  commentCollections: Record<string, CommentCollection>;
+  comments: Record<string, Comment[]>;
+  connectionEpoch: number;
 };
 
 const empty: Data = { members: {}, projects: {}, features: {}, tasks: {}, topics: {}, meetings: {} };
@@ -51,24 +55,27 @@ export const useWorkspace = create<State>(() => ({
   pending: [],
   view: empty,
   activity: null,
+  commentCollections: {}, comments: {}, connectionEpoch: 0,
 }));
 
 const set = (patch: Partial<State> | ((s: State) => Partial<State>)) =>
   useWorkspace.setState((s) => {
     const next = { ...s, ...(typeof patch === "function" ? patch(s) : patch) };
-    return { ...next, view: project(next) };
+    return { ...next, view: project(next), comments: Object.fromEntries(Object.entries(next.commentCollections).map(([key, c]) => [key, projectComments(c, next.pending, next.memberId ?? "")])) };
   });
 
 export const workspaceActions = {
   reset() {
-    useWorkspace.setState({ status: "connecting", memberId: null, version: 0, confirmed: empty, pending: [], view: empty, activity: null });
+    useWorkspace.setState({ status: "connecting", memberId: null, version: 0, confirmed: empty, pending: [], view: empty, activity: null, commentCollections: {}, comments: {}, connectionEpoch: 0 });
   },
   setStatus(status: ConnectionStatus) {
     useWorkspace.setState({ status });
   },
   /** A fresh snapshot replaces everything; pending commands stay and are re-applied on top. */
   snapshot(version: number, memberId: string, data: Snapshot) {
-    set({
+    set((s) => ({
+      connectionEpoch: s.connectionEpoch + 1,
+      commentCollections: Object.fromEntries(Object.entries(s.commentCollections).map(([key, c]) => [key, newCollection(c.target)])),
       version,
       memberId,
       status: "online",
@@ -81,14 +88,19 @@ export const workspaceActions = {
         topics: byId(data.topics),
         meetings: byId(data.meetings),
       },
-    });
+    }));
   },
   change(version: number, changes: Change[]) {
     set((s) => {
       if (version <= s.version) return {}; // stale
       const confirmed = { ...s.confirmed };
       let activity = s.activity;
+      let commentCollections = s.commentCollections;
       for (const c of changes) {
+        if (c.entity === "comment") {
+          commentCollections = Object.fromEntries(Object.entries(commentCollections).map(([key, collection]) => [key, commentChange(collection, c, version)]));
+          continue;
+        }
         if (c.entity === "activity") {
           if (activity && c.op === "upsert") activity = [c.row, ...activity.filter((a) => a.id !== c.row.id)];
           continue;
@@ -98,7 +110,7 @@ export const workspaceActions = {
         else table[c.row.id] = c.row;
         (confirmed as Record<string, unknown>)[`${c.entity}s`] = table;
       }
-      return { version, confirmed, activity };
+      return { version, confirmed, activity, commentCollections };
     });
   },
   addPending(p: Pending) {
@@ -106,6 +118,22 @@ export const workspaceActions = {
   },
   removePending(id: string) {
     set((s) => ({ pending: s.pending.filter((p) => p.id !== id) }));
+  },
+  loadComments(target: CommentTarget) {
+    set((s) => ({ commentCollections: { ...s.commentCollections, [commentKey(target)]: newCollection(target) } }));
+  },
+  unloadComments(target: CommentTarget) {
+    set((s) => {
+      const { [commentKey(target)]: _, ...commentCollections } = s.commentCollections;
+      return { commentCollections };
+    });
+  },
+  commentsPage(target: CommentTarget, page: CommentsPage, version: number, epoch: number, generation: symbol) {
+    set((s) => {
+      const key = commentKey(target), collection = s.commentCollections[key];
+      if (!collection || collection.generation !== generation || s.connectionEpoch !== epoch) return {};
+      return { commentCollections: { ...s.commentCollections, [key]: commentPage(collection, page, version) } };
+    });
   },
   setActivity(items: Activity[], append: boolean) {
     useWorkspace.setState((s) => ({ activity: append && s.activity ? [...s.activity, ...items] : items }));

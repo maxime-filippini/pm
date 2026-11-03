@@ -22,6 +22,14 @@ At the last check, the [CI/deployment run for the merged baseline](https://githu
 
 Last implementation verification: 47 tests passed, typecheck/build/convention checks passed, and browser flows covered Features, linked Tasks, manual Feature completion, and meeting-created proposals at desktop and 375 px widths. This is a recorded baseline, not the current CI result. The production build still reports a large client bundle (about 672 KB uncompressed / 209 KB gzip). Local dev data includes explicitly named demo Features/Tasks and a closed demo Meeting from browser checks; it is not a clean fixture.
 
+## Comments implementation (current branch)
+
+Step 1 is implemented on `feat/comments`: author-only edit/delete, target validation, tuple pagination, Activity attribution, optimistic rollback, loaded-target state, query/live race reconciliation, and reconnect reloads. The existing Comments table is reused. This work is separate from the merged baseline above; it is not merged or deployed to production.
+
+Validation: 55 passing runtime and client-store tests; typecheck, full tests, build, convention and diff checks; local browser post/edit/delete on both detail pages, cross-tab edits/deletes, and 375 px layouts without horizontal overflow. Browser check Comments were deleted afterward. The initial bundle remains about 678 KB / 211 KB gzip; step 9 is still pending.
+
+Next implementation step: **2. Activity and lasting Restore actions**. Markdown remains step 3.
+
 ## Execution order and acceptance checks
 
 Keep one reviewable PR per step, following the existing branch/commit conventions in [`../CLAUDE.md`](../CLAUDE.md). Steps 1–3 are the immediate next work. Follow the contracts in spec §5; their new query shapes are planned and still need implementation.

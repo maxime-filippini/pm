@@ -1,5 +1,6 @@
 import type { Command } from "../../../shared/commands";
 import type { CommandContext } from "../context";
+import * as comment from "./comment";
 import * as feature from "./feature";
 import * as meeting from "./meeting";
 import * as project from "./project";
@@ -8,6 +9,9 @@ import * as topic from "./topic";
 
 export function apply(ctx: CommandContext, command: Command): void {
   switch (command.name) {
+    case "comment.create": return comment.create(ctx, command.args);
+    case "comment.edit": return comment.edit(ctx, command.args);
+    case "comment.delete": return comment.remove(ctx, command.args);
     case "project.create": return project.create(ctx, command.args);
     case "project.rename": return project.rename(ctx, command.args);
     case "project.archive": return project.setArchived(ctx, command.args, true);
