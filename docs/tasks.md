@@ -49,9 +49,10 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [x] Router (TanStack), Zustand store fed by socket, Tailwind
 - [ ] shadcn/ui (plain Tailwind components for now)
 - [x] Sync layer: socket with backoff, ping every 30 s, pending queue, optimistic apply, rollback + toast on reject, replay after reconnect
+- [x] Project-scoped navigation: inside a Project the top bar is a Project switcher plus Tasks / My Tasks tabs, Task pages live under the Project (`/w/:slug/p/:key/t/:n`, with `/w/:slug/t/WEB-12` redirecting), and the app reopens the last Project
 - [x] Views: Workspace home (Project list), Project / Tasks (grouped by status, assignee filter, move up/down), Task detail (basic), My Tasks
-- [ ] Drag to reorder on desktop
-- [ ] Mobile-first layout (responsive basics only; needs a pass on a phone)
+- [x] Drag to reorder on desktop (mouse); up/down buttons on touch screens
+- [ ] Mobile-first layout (bigger tap targets, sticky top bar, checked at 375 px; still needs a pass on a real phone)
 
 ### Done when
 - [x] Two browsers see each other's Task edits live (verified locally)

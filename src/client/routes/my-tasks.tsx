@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { TaskRow } from "../components/TaskRow";
 import { Card, Empty } from "../components/ui";
 import { useWorkspace } from "../store/workspace";
-import { byRank } from "../tasks";
+import { byRank } from "../../shared/rank";
 
 export function MyTasksPage() {
   const { slug } = useParams({ from: "/w/$slug/me" });
