@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, ProjectKey, Rank, TaskStatus } from "./entities";
+import { Id, ProjectKey, Rank, TaskStatus, FeatureStatus } from "./entities";
 
 const Title = z.string().trim().min(1, "Title is required").max(200);
 const Name = z.string().trim().min(1, "Name is required").max(100);
@@ -13,6 +13,10 @@ export const commandSchemas = {
   "project.rename": z.object({ id: Id, name: Name }),
   "project.archive": z.object({ id: Id }),
   "project.unarchive": z.object({ id: Id }),
+  "feature.create": z.object({ id: Id, projectId: Id, title: Title, description: Description.optional() }),
+  "feature.update": z.object({ id: Id, title: Title.optional(), description: Description.optional() }),
+  "feature.setStatus": z.object({ id: Id, status: FeatureStatus }),
+  "meeting.createFeature": z.object({ topicId: Id, featureId: Id, title: Title, description: Description.optional() }),
   "task.create": z.object({
     id: Id,
     projectId: Id,

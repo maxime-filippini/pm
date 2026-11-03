@@ -208,6 +208,7 @@ Every command runs as `(actor: Member, via?: string, args)`. It validates, then 
 | `meeting.recordOutcome` | `topicId, outcome` | open Meeting only |
 | `meeting.clearOutcome` | `topicId` | open Meeting only, Topic resolved in this Meeting |
 | `meeting.createTask` | `topicId, taskId, title, assigneeId?` | open Meeting only; creates the Task and appends "Created WEB-12 for Alice" to the Topic's Outcome in one transaction |
+| `meeting.createFeature` | `topicId, featureId, title, description?` | open Meeting only; proposes a Feature and records it in the Outcome atomically |
 | `meeting.close` | `id` | |
 | `meeting.delete` / `meeting.restore` | `id` | soft delete; see domain rules |
 
@@ -233,7 +234,7 @@ All views are responsive and work on a phone first.
 - **Features**: per Project, `proposed` first, then `accepted` with Task progress (n/m done), then `done` and `rejected` collapsed.
 - **Feature detail**: description, status controls (with who decided and when), Tasks, Comments, Activity.
 - **Task detail**: key, title, description, status, assignee, Feature, Pull Request links with state badges, Comments, Activity.
-- **Topics / Meeting** (a Project tab): an unresolved Topic list you can reorder, with "Start Meeting". During a Meeting: attendee toggles, each Topic with an Outcome box, its related Task's status and assignee, a quick "create Task" (title + assignee, noted in the Outcome), and "Close Meeting". "Create Feature" comes with Features.
+- **Topics / Meeting** (a Project tab): an unresolved Topic list you can reorder, with "Start Meeting". During a Meeting: attendee toggles, each Topic with an Outcome box, its related Task's status and assignee, a quick "create Task" (title + assignee, noted in the Outcome), and "Close Meeting". "Create Feature" proposes a Feature using the Topic details and records it in the Outcome.
 - **Past Meetings** (under the Project's Meetings tab): date, attendees, Topics and their Outcomes.
 - **Activity**: a feed for the whole Workspace, paged with `activity.list`.
 - **⌘K quick-jump**: jump to a Task by key, or search Tasks, Features and Topics by title with SQL `LIKE`. On mobile, a search button opens the same dialog.

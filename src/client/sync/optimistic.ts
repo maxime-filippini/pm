@@ -1,5 +1,5 @@
 import type { Command } from "../../shared/commands";
-import { type Meeting, type Project, type Task, type Topic, taskKey } from "../../shared/entities";
+import { type Feature, type Meeting, type Project, type Task, type Topic, taskKey } from "../../shared/entities";
 import { generateKeyBetween } from "fractional-indexing";
 import type { Data } from "../store/workspace";
 
@@ -22,6 +22,34 @@ export function applyOptimistic(data: Data, command: Command, memberId: string, 
     case "project.unarchive":
       return patchProject(data, command.args.id, { archivedAt: null });
 
+    case "feature.create": {
+      const a = command.args;
+      if (data.features[a.id] || !data.projects[a.projectId]) return data;
+      const feature: Feature = { id: a.id, projectId: a.projectId, title: a.title, description: a.description ?? "", status: "proposed", decidedBy: null, decidedAt: null, createdBy: memberId, createdAt: now, updatedAt: now };
+      return { ...data, features: { ...data.features, [a.id]: feature } };
+    }
+    case "feature.update": {
+      const { id, ...fields } = command.args;
+      const feature = data.features[id];
+      const patch = Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
+      return feature ? { ...data, features: { ...data.features, [id]: { ...feature, ...patch, updatedAt: now } } } : data;
+    }
+    case "feature.setStatus": {
+      const { id, status } = command.args;
+      const feature = data.features[id];
+      if (!feature || feature.status === status) return data;
+      const decision = status === "accepted" || status === "rejected";
+      return { ...data, features: { ...data.features, [id]: { ...feature, status, updatedAt: now, ...(decision && { decidedBy: memberId, decidedAt: now }) } } };
+    }
+    case "meeting.createFeature": {
+      const a = command.args;
+      const topic = data.topics[a.topicId];
+      const meeting = openMeetingFor(data, topic?.projectId);
+      if (!topic || !meeting || data.features[a.featureId]) return data;
+      const next = applyOptimistic(data, { name: "feature.create", args: { id: a.featureId, projectId: topic.projectId, title: a.title, description: a.description ?? topic.body } }, memberId, now);
+      const line = `Proposed Feature: ${a.title}`;
+      return patchTopic(next, topic.id, { outcome: topic.outcome ? `${topic.outcome}\n${line}` : line, resolvedInMeetingId: meeting.id, resolvedAt: now });
+    }
     case "task.create": {
       const a = command.args;
       const project = data.projects[a.projectId];

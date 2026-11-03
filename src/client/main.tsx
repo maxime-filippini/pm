@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { Toaster } from "@/components/ui/sonner";
 import "./index.css";
 import { AdminPage } from "./routes/admin";
+import { FeaturesPage, FeaturePage } from "./routes/features";
 import { HomePage } from "./routes/home";
 import { PastMeetingPage, ProjectMeetingsPage } from "./routes/meetings";
 import { MyTasksPage } from "./routes/my-tasks";
@@ -41,6 +42,8 @@ const projectRoute = createRoute({ getParentRoute: () => workspaceRoute, path: "
 const projectTasksRoute = createRoute({ getParentRoute: () => projectRoute, path: "/", component: ProjectTasksPage });
 const projectMyTasksRoute = createRoute({ getParentRoute: () => projectRoute, path: "/me", component: ProjectMyTasksPage });
 const taskRoute = createRoute({ getParentRoute: () => projectRoute, path: "/t/$number", component: TaskPage });
+const featuresRoute = createRoute({ getParentRoute: () => projectRoute, path: "/features", component: FeaturesPage });
+const featureRoute = createRoute({ getParentRoute: () => projectRoute, path: "/features/$featureId", component: FeaturePage });
 const meetingsRoute = createRoute({ getParentRoute: () => projectRoute, path: "/meetings", component: ProjectMeetingsPage });
 const pastMeetingRoute = createRoute({ getParentRoute: () => projectRoute, path: "/meetings/$meetingId", component: PastMeetingPage });
 // Short links by Task key (e.g. /w/acme/t/WEB-12) resolve into the Project.
@@ -52,7 +55,7 @@ const routeTree = rootRoute.addChildren([
   adminRoute,
   workspaceRoute.addChildren([
     projectsRoute,
-    projectRoute.addChildren([projectTasksRoute, projectMyTasksRoute, taskRoute, meetingsRoute, pastMeetingRoute]),
+    projectRoute.addChildren([projectTasksRoute, projectMyTasksRoute, taskRoute, featuresRoute, featureRoute, meetingsRoute, pastMeetingRoute]),
     taskKeyRoute,
     myTasksRoute,
   ]),

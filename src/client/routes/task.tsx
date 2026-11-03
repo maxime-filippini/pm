@@ -1,5 +1,5 @@
 import { Link, Navigate, useCanGoBack, useNavigate, useParams, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { EditableText } from "@/components/EditableText";
 import { TASK_STATUSES, type TaskStatus } from "../../shared/entities";
 import { ArrowLeftIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
 import { deletedToast, Empty, STATUS_LABEL } from "@/components/common";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { FEATURE_LABEL, FeatureDonePrompt } from "./features";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
 
@@ -30,6 +31,7 @@ export function TaskPage() {
   const taskKey = `${projectKey}-${number}`;
   const project = useWorkspace((s) => Object.values(s.view.projects).find((p) => p.key === projectKey));
   const task = useWorkspace((s) => (project ? Object.values(s.view.tasks).find((t) => t.projectId === project.id && t.number === Number(number)) : undefined));
+  const features = useWorkspace((s) => s.view.features);
   const members = useWorkspace((s) => s.view.members);
 
   if (!project || !task) return <Empty>No Task {taskKey}.</Empty>;
@@ -87,6 +89,16 @@ export function TaskPage() {
         </Label>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <label htmlFor="task-feature">Feature</label>
+        <NativeSelect className="max-w-full" id="task-feature" value={task.featureId ?? ""} onChange={(e) => socket.send("task.update", { id: task.id, featureId: e.target.value || null })}>
+          <NativeSelectOption value="">Standalone Task</NativeSelectOption>
+          {Object.values(features).filter((f) => f.projectId === project.id).sort((a, b) => Number(b.status === "accepted") - Number(a.status === "accepted") || a.title.localeCompare(b.title)).map((f) => <NativeSelectOption key={f.id} value={f.id}>{f.title} ({FEATURE_LABEL[f.status]})</NativeSelectOption>)}
+        </NativeSelect>
+        {task.featureId && features[task.featureId] && <Link to="/w/$slug/p/$key/features/$featureId" params={{ slug, key: project.key, featureId: task.featureId }} className="underline">Open Feature</Link>}
+      </div>
+      {task.featureId && features[task.featureId] && <FeatureDonePrompt feature={features[task.featureId]!} />}
+
       <Card className="gap-2 px-4">
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Description</h2>
         <EditableText
@@ -103,32 +115,4 @@ export function TaskPage() {
       </p>
     </div>
   );
-}
-
-type FieldProps = {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement & HTMLTextAreaElement>) => void;
-  onBlur: () => void;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-};
-
-/** Local draft while focused; saves on blur (and Enter for single-line). Follows remote changes otherwise. */
-function EditableText({ value, onSave, render, multiline }: { value: string; onSave: (v: string) => void; render: (p: FieldProps) => React.ReactNode; multiline?: boolean }) {
-  const [draft, setDraft] = useState<string | null>(null);
-  useEffect(() => {
-    if (draft === value) setDraft(null);
-  }, [value, draft]);
-  const save = () => {
-    if (draft !== null && draft !== value && (multiline || draft.trim())) onSave(draft);
-    setDraft(null);
-  };
-  return render({
-    value: draft ?? value,
-    onChange: (e) => setDraft(e.target.value),
-    onBlur: save,
-    onKeyDown: (e) => {
-      if (e.key === "Escape") setDraft(null);
-      if (e.key === "Enter" && !multiline) (e.target as HTMLElement).blur();
-    },
-  });
 }

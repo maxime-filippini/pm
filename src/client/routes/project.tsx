@@ -33,26 +33,30 @@ export function ProjectTasksPage() {
   const members = useWorkspace((s) => s.view.members);
   const me = useWorkspace((s) => s.memberId);
   const [title, setTitle] = useState("");
+  const features = useWorkspace((s) => s.view.features);
+  const [featureId, setFeatureId] = useState("");
   const [assignee, setAssignee] = useState<string>("");
   const [showClosed, setShowClosed] = useState(false);
   const [renaming, setRenaming] = useState<string | null>(null);
+  useEffect(() => setFeatureId(""), [project?.id]);
 
   const groups = useMemo(() => {
     if (!project) return [];
     const tasks = Object.values(allTasks)
       .filter((t) => t.projectId === project.id)
+      .filter((t) => !featureId || (featureId === "none" ? t.featureId === null : t.featureId === featureId))
       .filter((t) => !assignee || (assignee === "none" ? t.assigneeId === null : t.assigneeId === assignee))
       .sort(byRank);
     const statuses: TaskStatus[] = showClosed ? [...TASK_STATUSES] : ["in_progress", "todo"];
     return statuses.map((status) => ({ status, tasks: tasks.filter((t) => t.status === status) }));
-  }, [allTasks, project, assignee, showClosed]);
+  }, [allTasks, project, assignee, showClosed, featureId]);
 
   if (!project) return null;
   const archived = project.archivedAt !== null;
 
   const create = (e: React.FormEvent) => {
     e.preventDefault();
-    if (socket.send("task.create", { id: uuidv7(), projectId: project.id, title, assigneeId: assignee && assignee !== "none" ? assignee : undefined })) {
+    if (socket.send("task.create", { id: uuidv7(), projectId: project.id, title, featureId: featureId && featureId !== "none" ? featureId : null, assigneeId: assignee && assignee !== "none" ? assignee : undefined })) {
       setTitle("");
     }
   };
@@ -105,6 +109,11 @@ export function ProjectTasksPage() {
           {me && <NativeSelectOption value={me}>Me</NativeSelectOption>}
           <NativeSelectOption value="none">Unassigned</NativeSelectOption>
           {activeMembers.filter((m) => m.id !== me).map((m) => <NativeSelectOption key={m.id} value={m.id}>{m.name}</NativeSelectOption>)}
+        </NativeSelect>
+        <NativeSelect className="max-w-full" value={featureId} onChange={(e) => setFeatureId(e.target.value)} aria-label="Feature filter">
+          <NativeSelectOption value="">All Features</NativeSelectOption>
+          <NativeSelectOption value="none">Standalone Tasks</NativeSelectOption>
+          {Object.values(features).filter((f) => f.projectId === project.id).map((f) => <NativeSelectOption key={f.id} value={f.id}>{f.title}</NativeSelectOption>)}
         </NativeSelect>
         <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
       </div>

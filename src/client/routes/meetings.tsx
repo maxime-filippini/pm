@@ -362,7 +362,7 @@ function DeleteMeetingDialog({ meeting, resolved, open, onOpenChange, onDeleted 
           <AlertDialogDescription>
             It disappears from the Project as if it never happened.
             {resolved > 0 && ` The ${resolved} Topic${resolved === 1 ? "" : "s"} discussed in it go back on the agenda.`}
-            {" "}Tasks created during it are kept. You can undo right after.
+            {" "}Tasks and Features created during it are kept. You can undo right after.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -405,6 +405,7 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
   const resolved = topic.resolvedInMeetingId === meeting.id;
   const [editingOutcome, setEditingOutcome] = useState(false);
   const [creatingTask, setCreatingTask] = useState(false);
+  const [creatingFeature, setCreatingFeature] = useState(false);
 
   return (
     <li>
@@ -449,6 +450,8 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
           />
         )}
 
+        <Button variant="ghost" size="sm" className="self-start ml-8" onClick={() => setCreatingFeature(true)}><PlusIcon /> Create Feature</Button>
+        {creatingFeature && <CreateFeatureForm topic={topic} onDone={() => setCreatingFeature(false)} />}
         {creatingTask && <CreateTaskForm topic={topic} onDone={() => setCreatingTask(false)} />}
       </Card>
     </li>
@@ -645,4 +648,19 @@ export function PastMeetingPage() {
       </section>
     </div>
   );
+}
+
+function CreateFeatureForm({ topic, onDone }: { topic: Topic; onDone: () => void }) {
+  const socket = useSocket();
+  const [title, setTitle] = useState(topic.title);
+  const [description, setDescription] = useState(topic.body);
+  return <form className="ml-8 space-y-2 rounded-md border border-dashed p-3" onSubmit={(e) => {
+    e.preventDefault();
+    if (socket.send("meeting.createFeature", { topicId: topic.id, featureId: uuidv7(), title, description })) onDone();
+  }}>
+    <p className="text-sm font-semibold">Propose a Feature</p>
+    <Input autoFocus aria-label="Feature title" value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} />
+    <Textarea aria-label="Feature description" value={description} onChange={(e) => setDescription(e.target.value)} />
+    <div className="flex flex-wrap gap-2"><Button disabled={!title.trim()} size="sm">Create Feature</Button><Button type="button" variant="ghost" size="sm" onClick={onDone}>Cancel</Button></div>
+  </form>;
 }
