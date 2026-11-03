@@ -5,8 +5,7 @@ import { TASK_STATUSES, type Task, type TaskStatus } from "../../shared/entities
 import { uuidv7 } from "../../shared/ids";
 import { byRank } from "../../shared/rank";
 import { Empty, SectionHeading, ShowClosedToggle, STATUS_LABEL } from "@/components/common";
-import { SortableTaskList } from "@/components/SortableTaskList";
-import { TaskCard, TaskList } from "@/components/TaskCard";
+import { SortableTaskList, TaskCard, TaskList } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";

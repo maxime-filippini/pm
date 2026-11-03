@@ -45,11 +45,11 @@ _Avoid_: Log, audit trail, feed
 ### Meetings
 
 **Topic**:
-Something a Member wants to discuss at the next Meeting. May reference a Feature or Task. A Topic is resolved once it has an Outcome; a Topic left without one carries over to the next Meeting.
+Something a Member wants to discuss at their Project's next Meeting. May reference a Feature or Task of that Project. A Topic is resolved once it has an Outcome; a Topic left without one carries over to the next Meeting.
 _Avoid_: Inbox item, to-sync, agenda item
 
 **Meeting**:
-A synchronous session of Members (call or in person) held at irregular intervals. Its agenda is the open Topics; once closed it remains as a record of what was decided.
+A synchronous session of Members (call or in person) about one Project, held at irregular intervals. Its agenda is the Project's open Topics; once closed it remains as a record of what was decided.
 _Avoid_: Sync, call, standup
 
 **Outcome**:

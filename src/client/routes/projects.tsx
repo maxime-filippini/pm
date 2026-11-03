@@ -16,6 +16,8 @@ export function ProjectsPage() {
   const socket = useSocket();
   const projects = useWorkspace((s) => s.view.projects);
   const tasks = useWorkspace((s) => s.view.tasks);
+  const topics = useWorkspace((s) => s.view.topics);
+  const meetings = useWorkspace((s) => s.view.meetings);
   const [showArchived, setShowArchived] = useState(false);
   const [key, setKey] = useState("");
   const [name, setName] = useState("");
@@ -26,6 +28,9 @@ export function ProjectsPage() {
   );
   const openCount = (projectId: string) =>
     Object.values(tasks).filter((t) => t.projectId === projectId && (t.status === "todo" || t.status === "in_progress")).length;
+
+  const openTopics = (projectId: string) => Object.values(topics).filter((t) => t.projectId === projectId && t.resolvedAt === null).length;
+  const meetingOpen = (projectId: string) => Object.values(meetings).some((m) => m.projectId === projectId && m.endedAt === null);
 
   const create = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +58,14 @@ export function ProjectsPage() {
                 {p.archivedAt !== null ? (
                   <Badge variant="outline">Archived</Badge>
                 ) : (
-                  <span className="text-xs text-muted-foreground">{openCount(p.id)} open</span>
+                  <span className="text-right text-xs text-muted-foreground">
+                    {meetingOpen(p.id) ? (
+                      <Badge variant="secondary" className="mr-2">Meeting in progress</Badge>
+                    ) : (
+                      openTopics(p.id) > 0 && <span className="mr-2 hidden sm:inline">{openTopics(p.id)} to discuss ·</span>
+                    )}
+                    {openCount(p.id)} open
+                  </span>
                 )}
                 <ChevronRightIcon className="size-4 text-muted-foreground" />
               </Link>

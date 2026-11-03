@@ -1,5 +1,5 @@
 import type { Command } from "../../shared/commands";
-import type { Project, Task } from "../../shared/entities";
+import { type Meeting, type Project, type Task, type Topic, taskKey } from "../../shared/entities";
 import { generateKeyBetween } from "fractional-indexing";
 import type { Data } from "../store/workspace";
 
@@ -62,7 +62,88 @@ export function applyOptimistic(data: Data, command: Command, memberId: string, 
     }
     case "task.move":
       return patchTask(data, command.args.id, { rank: command.args.rank });
+
+    case "topic.create": {
+      const a = command.args;
+      if (data.topics[a.id] || !data.projects[a.projectId]) return data;
+      const last = Object.values(data.topics)
+        .filter((t) => t.projectId === a.projectId)
+        .reduce<string | null>((max, t) => (max === null || t.rank > max ? t.rank : max), null);
+      const topic: Topic = {
+        id: a.id,
+        projectId: a.projectId,
+        title: a.title,
+        body: a.body ?? "",
+        refType: a.ref ? "task" : null,
+        refId: a.ref?.id ?? null,
+        rank: generateKeyBetween(last, null),
+        authorId: memberId,
+        createdAt: now,
+        outcome: null,
+        resolvedInMeetingId: null,
+        resolvedAt: null,
+      };
+      return { ...data, topics: { ...data.topics, [a.id]: topic } };
+    }
+    case "topic.update": {
+      const { id, title, body, ref } = command.args;
+      return patchTopic(data, id, {
+        ...(title !== undefined && { title }),
+        ...(body !== undefined && { body }),
+        ...(ref !== undefined && { refType: ref ? "task" : null, refId: ref?.id ?? null }),
+      });
+    }
+    case "topic.move":
+      return patchTopic(data, command.args.id, { rank: command.args.rank });
+    case "topic.delete": {
+      const { [command.args.id]: _, ...topics } = data.topics;
+      return { ...data, topics };
+    }
+
+    case "meeting.start": {
+      const { id, projectId } = command.args;
+      if (data.meetings[id]) return data;
+      const attendeeIds = Object.values(data.members).filter((m) => m.active).map((m) => m.id).sort();
+      const meeting: Meeting = { id, projectId, startedAt: now, startedBy: memberId, endedAt: null, endedBy: null, attendeeIds };
+      return { ...data, meetings: { ...data.meetings, [id]: meeting } };
+    }
+    case "meeting.setAttendees":
+      return patchMeeting(data, command.args.id, { attendeeIds: [...new Set(command.args.memberIds)].sort() });
+    case "meeting.close":
+      return patchMeeting(data, command.args.id, { endedAt: now, endedBy: memberId });
+    case "meeting.recordOutcome": {
+      const meeting = openMeetingFor(data, data.topics[command.args.topicId]?.projectId);
+      if (!meeting) return data;
+      return patchTopic(data, command.args.topicId, { outcome: command.args.outcome, resolvedInMeetingId: meeting.id, resolvedAt: now });
+    }
+    case "meeting.clearOutcome":
+      return patchTopic(data, command.args.topicId, { outcome: null, resolvedInMeetingId: null, resolvedAt: null });
+    case "meeting.createTask": {
+      const a = command.args;
+      const topic = data.topics[a.topicId];
+      const project = topic && data.projects[topic.projectId];
+      const meeting = openMeetingFor(data, topic?.projectId);
+      if (!topic || !project || !meeting || data.tasks[a.taskId]) return data;
+      const withTask = applyOptimistic(data, { name: "task.create", args: { id: a.taskId, projectId: project.id, title: a.title, assigneeId: a.assigneeId } }, memberId, now);
+      const assignee = a.assigneeId ? data.members[a.assigneeId] : undefined;
+      const line = `Created ${taskKey(project, { number: project.nextTaskNumber })}${assignee ? ` for ${assignee.name}` : ""}`;
+      return patchTopic(withTask, topic.id, { outcome: topic.outcome ? `${topic.outcome}\n${line}` : line, resolvedInMeetingId: meeting.id, resolvedAt: now });
+    }
   }
+}
+
+function openMeetingFor(data: Data, projectId: string | undefined): Meeting | undefined {
+  return projectId ? Object.values(data.meetings).find((m) => m.projectId === projectId && m.endedAt === null) : undefined;
+}
+
+function patchTopic(data: Data, id: string, patch: Partial<Topic>): Data {
+  const topic = data.topics[id];
+  return topic ? { ...data, topics: { ...data.topics, [id]: { ...topic, ...patch } } } : data;
+}
+
+function patchMeeting(data: Data, id: string, patch: Partial<Meeting>): Data {
+  const meeting = data.meetings[id];
+  return meeting ? { ...data, meetings: { ...data.meetings, [id]: { ...meeting, ...patch } } } : data;
 }
 
 function patchProject(data: Data, id: string, patch: Partial<Project>): Data {

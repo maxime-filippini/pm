@@ -1,5 +1,5 @@
 import type { Snapshot } from "../../shared/protocol";
-import { all, toActivity, toFeature, toMember, toProject, toTask } from "./rows";
+import { all, GROUP_BY_MEETING, MEETING_SELECT, toActivity, toFeature, toMeeting, toMember, toProject, toTask, toTopic } from "./rows";
 
 export function snapshot(sql: SqlStorage): Snapshot {
   return {
@@ -7,6 +7,8 @@ export function snapshot(sql: SqlStorage): Snapshot {
     projects: all(sql, toProject, "SELECT * FROM projects ORDER BY name"),
     features: all(sql, toFeature, "SELECT * FROM features"),
     tasks: all(sql, toTask, "SELECT * FROM tasks ORDER BY rank"),
+    topics: all(sql, toTopic, "SELECT * FROM topics ORDER BY rank"),
+    meetings: all(sql, toMeeting, `${MEETING_SELECT} ${GROUP_BY_MEETING} ORDER BY m.started_at`),
   };
 }
 

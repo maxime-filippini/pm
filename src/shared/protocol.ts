@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Activity, Change, Feature, Member, Project, Task } from "./entities";
+import type { Activity, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
 import { Id } from "./entities";
 
 // ---- Client → server ----
@@ -27,6 +27,9 @@ export type Snapshot = {
   projects: Project[];
   features: Feature[];
   tasks: Task[];
+  /** All Topics, resolved or not: small, and past Meetings read them. */
+  topics: Topic[];
+  meetings: Meeting[];
 };
 
 export type ErrorCode = "invalid" | "not_found" | "conflict" | "forbidden" | "internal";

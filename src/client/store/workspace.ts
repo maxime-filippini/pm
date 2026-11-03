@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Command } from "../../shared/commands";
-import type { Activity, Change, Feature, Member, Project, Task } from "../../shared/entities";
+import type { Activity, Change, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
 import type { Snapshot } from "../../shared/protocol";
 import { applyOptimistic } from "../sync/optimistic";
 
@@ -9,6 +9,8 @@ export type Data = {
   projects: Record<string, Project>;
   features: Record<string, Feature>;
   tasks: Record<string, Task>;
+  topics: Record<string, Topic>;
+  meetings: Record<string, Meeting>;
 };
 
 export type Pending = { id: string; command: Command; at: number };
@@ -29,7 +31,7 @@ type State = {
   activity: Activity[] | null;
 };
 
-const empty: Data = { members: {}, projects: {}, features: {}, tasks: {} };
+const empty: Data = { members: {}, projects: {}, features: {}, tasks: {}, topics: {}, meetings: {} };
 
 function byId<T extends { id: string }>(rows: T[]): Record<string, T> {
   return Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -76,6 +78,8 @@ export const workspaceActions = {
         projects: byId(data.projects),
         features: byId(data.features),
         tasks: byId(data.tasks),
+        topics: byId(data.topics),
+        meetings: byId(data.meetings),
       },
     });
   },
