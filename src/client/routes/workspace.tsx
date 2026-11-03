@@ -1,3 +1,4 @@
+import { QuickJump } from "@/components/QuickJump";
 import { Link, Outlet, useMatchRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { CheckIcon, ChevronsUpDownIcon, FolderIcon, ListTodoIcon } from "lucide-react";
 import { useMemo } from "react";
@@ -25,6 +26,7 @@ export function WorkspaceLayout() {
         {key ? <ProjectNav slug={slug} projectKey={key} /> : <WorkspaceNav slug={slug} />}
         <span className="flex-1" />
         <Link to="/w/$slug/activity" params={{ slug }} className={tab} activeProps={{ className: activeTab }}>Activity</Link>
+        <QuickJump />
         <ConnectionBadge />
       </nav>
       <Gate>
