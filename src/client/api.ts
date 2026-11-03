@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 export type Me = {
   email: string;
@@ -16,12 +16,20 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return (res.status === 204 ? null : await res.json()) as T;
 }
 
-export function useMe() {
+const MeContext = createContext<{ me: Me | null; error: string | null; reload: () => Promise<void> } | null>(null);
+
+export function MeProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const reload = () => api<Me>("/api/me").then(setMe, (e: Error) => setError(e.message));
+  const reload = useCallback(() => api<Me>("/api/me").then((value) => { setMe(value); setError(null); }, (e: Error) => setError(e.message)), []);
   useEffect(() => {
     void reload();
-  }, []);
-  return { me, error, reload };
+  }, [reload]);
+  return createElement(MeContext.Provider, { value: { me, error, reload } }, children);
+}
+
+export function useMe() {
+  const identity = useContext(MeContext);
+  if (!identity) throw new Error("useMe requires MeProvider");
+  return identity;
 }

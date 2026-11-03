@@ -14,7 +14,7 @@ type AdminWorkspace = {
 };
 
 export function AdminPage() {
-  const { me } = useMe();
+  const { me, reload: reloadMe } = useMe();
   const [workspaces, setWorkspaces] = useState<AdminWorkspace[] | null>(null);
   const [slug, setSlug] = useState("");
   const [name, setName] = useState("");
@@ -27,14 +27,13 @@ export function AdminPage() {
   if (me && !me.isAdmin) return <Empty>Admins only.</Empty>;
   if (!workspaces) return <Empty>Loading…</Empty>;
 
-  const run = (p: Promise<unknown>) => p.then(load, (e: Error) => toast.error(e.message));
+  const run = (p: Promise<unknown>) => p.then(async () => { await Promise.all([load(), reloadMe()]); }, (e: Error) => toast.error(e.message));
 
   return (
     <div className="space-y-6">
       <PageHeader title="Workspace administration" description="Create Workspaces and manage their Members. Removing someone ends their access while preserving their recorded changes." />
       <SectionHeader title="Create a Workspace" description="Choose a name and a permanent URL slug for the group." />
 
-      <SectionHeader title="Add a Member" description="Use the email address they use to sign in through Cloudflare Access." />
       <form
         className="flex flex-wrap gap-2"
         onSubmit={(e) => {

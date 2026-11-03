@@ -1,4 +1,6 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, Link, Outlet, RouterProvider, useParams } from "@tanstack/react-router";
+import { AppShell } from "@/components/AppShell";
+import { MeProvider } from "./api";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "@/components/ui/sonner";
@@ -10,22 +12,10 @@ const rootRoute = createRootRoute({
 
 function AppFrame() {
   const { slug } = useParams({ strict: false });
-  return <div className={slug ? "" : "mx-auto max-w-3xl px-4 pt-6 pb-24 sm:px-8"}>
-    <AppHeader />
-    <Outlet />
+  return <MeProvider>
+    {slug ? <Outlet /> : <AppShell><Outlet /></AppShell>}
     <Toaster position="bottom-center" />
-  </div>;
-}
-
-/** Workspace pages carry their own responsive navigation shell. */
-function AppHeader() {
-  const { slug } = useParams({ strict: false });
-  if (slug) return null;
-  return (
-    <header className="mb-4">
-      <Link to="/" className="font-heading text-lg font-semibold">PM</Link>
-    </header>
-  );
+  </MeProvider>;
 }
 
 const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: lazyRouteComponent(() => import("./routes/home"), "HomePage") });
