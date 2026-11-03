@@ -1,3 +1,4 @@
+import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { useEffect, useState } from "react";
 import { api, useMe } from "../api";
 import { toast } from "sonner";
@@ -31,8 +32,10 @@ export function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-heading text-xl font-semibold">Admin</h1>
+      <PageHeader title="Workspace administration" description="Create Workspaces and manage their Members. Removing someone ends their access while preserving their recorded changes." />
+      <SectionHeader title="Create a Workspace" description="Choose a name and a permanent URL slug for the group." />
 
+      <SectionHeader title="Add a Member" description="Use the email address they use to sign in through Cloudflare Access." />
       <form
         className="flex flex-wrap gap-2"
         onSubmit={(e) => {
@@ -48,6 +51,7 @@ export function AdminPage() {
         <Button type="submit" className="h-9" disabled={!slug || !name}>Create Workspace</Button>
       </form>
 
+      <SectionHeader title="Workspaces and Members" description="Each Workspace has its own membership and shared data." />
       {workspaces.length === 0 && <Empty>No Workspaces yet.</Empty>}
       {workspaces.map((w) => <WorkspaceCard key={w.id} workspace={w} run={run} />)}
     </div>
@@ -64,8 +68,8 @@ function WorkspaceCard({ workspace: w, run }: { workspace: AdminWorkspace; run: 
       </h2>
       <ul className="divide-y divide-border text-sm">
         {w.members.map((m) => (
-          <li key={m.id} className="flex items-center gap-3 py-2">
-            <span className="flex-1">{m.name} <span className="text-muted-foreground">{m.email}</span></span>
+          <li key={m.id} className="flex flex-wrap items-center gap-3 py-2">
+            <span className="min-w-0 flex-1 break-words">{m.name} <span className="text-muted-foreground">{m.email}</span></span>
             <Button
               variant="ghost" size="sm"
               onClick={() => {
@@ -86,6 +90,7 @@ function WorkspaceCard({ workspace: w, run }: { workspace: AdminWorkspace; run: 
           </li>
         ))}
       </ul>
+      <SectionHeader title="Add a Member" description="Use the email address they use to sign in through Cloudflare Access." />
       <form
         className="flex flex-wrap gap-2"
         onSubmit={(e) => {

@@ -1,3 +1,4 @@
+import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { PullRequests } from "@/components/PullRequests";
 import { Viewing } from "@/components/Presence";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
@@ -51,6 +52,7 @@ export function TaskPage() {
 
   return (
     <Viewing target={{ type: "task", id: task.id }}><div className="space-y-5">
+      <PageHeader title={`Task ${taskKey}`} description="Define the work, track its progress and keep the discussion with the Task. Text changes save when you leave a field." />
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {/* Back returns to the list you came from (Tasks or My Tasks); a fresh tab falls back to Tasks. */}
         {canGoBack ? (
@@ -71,12 +73,15 @@ export function TaskPage() {
         </DropdownMenu>
       </div>
 
+      <section className="space-y-2"><SectionHeader title="Task title" />
       <EditableText
         value={task.title}
         onSave={(title) => socket.send("task.update", { id: task.id, title })}
         render={(p) => <Input {...p} aria-label="Title" className="h-10 font-heading text-lg font-semibold md:text-lg" />}
       />
 
+      </section>
+      <section className="space-y-3 rounded-xl border p-4"><SectionHeader title="Progress and ownership" description="Choose a status and one assignee. Link a Feature when this work supports a wider proposal." />
       <div className="flex flex-wrap gap-4 text-sm">
         <Label className="gap-2 font-normal">
           <span className="text-muted-foreground">Status</span>
@@ -103,8 +108,9 @@ export function TaskPage() {
       </div>
       {task.featureId && features[task.featureId] && <FeatureDonePrompt feature={features[task.featureId]!} />}
 
+      </section>
       <Card className="gap-2 px-4">
-        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Description</h2>
+        <SectionHeader title="Description" description="Add enough context for another Member to pick up the work." />
         <EditableText
           field="description" value={task.description}
           onSave={(description) => socket.send("task.update", { id: task.id, description })}

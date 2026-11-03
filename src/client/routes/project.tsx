@@ -1,3 +1,4 @@
+import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { Outlet, useParams } from "@tanstack/react-router";
 import { ArchiveIcon, ArchiveRestoreIcon, MoreHorizontalIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -68,7 +69,7 @@ export function ProjectTasksPage() {
     <div className="space-y-5">
       <header className="flex items-center gap-2">
         {renaming === null ? (
-          <h1 className="min-w-0 flex-1 truncate font-heading text-xl font-semibold" onDoubleClick={() => setRenaming(project.name)}>{project.name}</h1>
+          <h1 className="min-w-0 flex-1 truncate font-heading text-xl font-semibold" onDoubleClick={() => setRenaming(project.name)}>{project.name}: Tasks</h1>
         ) : (
           <form
             className="flex-1"
@@ -93,17 +94,19 @@ export function ProjectTasksPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
+      <p className="text-sm leading-relaxed text-muted-foreground">Break work into Tasks, assign one Member to each, and track progress. Reorder Tasks within each status to show what matters next.</p>
 
       {archived && <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">This Project is archived. Unarchive it to add Tasks.</p>}
 
       {!archived && (
+        <section className="space-y-3 rounded-xl border p-4"><SectionHeader title="Add a Task" description="A Task is one piece of work. The current assignee and Feature filters also apply to new Tasks." />
         <form onSubmit={create} className="flex gap-2">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New Task title" className="h-9" />
           <Button type="submit" className="h-9" disabled={!title.trim()}><PlusIcon /> Add</Button>
-        </form>
+        </form></section>
       )}
 
-      <div className="flex flex-wrap items-center gap-4 text-sm">
+      <section className="space-y-3 rounded-xl border p-4"><SectionHeader title="Find Tasks" description="Filter by assignee or Feature, or include completed work." /><div className="flex flex-wrap items-center gap-4 text-sm">
         <NativeSelect value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assignee filter">
           <NativeSelectOption value="">Anyone</NativeSelectOption>
           {me && <NativeSelectOption value={me}>Me</NativeSelectOption>}
@@ -116,7 +119,7 @@ export function ProjectTasksPage() {
           {Object.values(features).filter((f) => f.projectId === project.id).map((f) => <NativeSelectOption key={f.id} value={f.id}>{f.title}</NativeSelectOption>)}
         </NativeSelect>
         <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
-      </div>
+      </div></section>
 
       {groups.map(({ status, tasks }) => (
         <section key={status} className="space-y-2">
@@ -151,6 +154,7 @@ export function ProjectMyTasksPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader title={project.name + ": My Tasks"} description="Focus on work assigned to you in this Project. In-progress Tasks appear first; completed work stays available through the toggle." />
       <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
       {groups.length === 0 && <Empty>Nothing assigned to you in {project.name}.</Empty>}
       {groups.map(({ status, tasks }) => (

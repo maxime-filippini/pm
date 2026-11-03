@@ -1,3 +1,4 @@
+import { SectionHeader } from "./PageHeader";
 import { ConcurrentDraft } from "./ConcurrentDraft";
 import { useEffect, useState } from "react";
 import type { Comment, CommentTarget } from "../../shared/entities";
@@ -49,7 +50,7 @@ export function Comments({ target }: { target: CommentTarget }) {
   }, [key, epoch, status]);
 
   return <Card className="gap-3 px-4">
-    <h2 className="font-semibold">Comments</h2>
+    <SectionHeader title="Comments" description="Discuss the work here. Everyone can post; you can edit or delete your own Comments." />
     {items.map((comment) => <CommentRow key={comment.id} comment={comment} author={members[comment.authorId]?.name ?? "Former Member"} own={memberId === comment.authorId} />)}
     {loading && <p role="status" className="text-sm text-muted-foreground">Loading Comments…</p>}
     {error && <div role="alert" className="text-sm">{error} <Button variant="outline" size="sm" onClick={() => void load(collection?.nextCursor)}>Retry</Button></div>}
