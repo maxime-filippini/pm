@@ -1,6 +1,6 @@
 # One shared preview environment for feature branches
 
-Every push to a branch other than `master` deploys to a separate Worker, `pm-preview`, on `pm-preview.maximefilippini.me`. It has its own D1 database (`pm-registry-preview`) and its own Durable Objects, so a preview can never read or write production data. There is one preview, not one per branch: the latest push wins. The hostname sits in the same Access application as production, so the login and the `ACCESS_AUD` are the same. Production deploys only from `master`.
+Every push to a branch other than `master` deploys to a separate Worker, `pm-preview`, on `pm-preview.maximefilippini.me`. It has its own D1 database (`pm-registry-preview`) and its own Durable Objects, so a preview can never read or write production data. There is one preview, not one per branch: the latest push wins. The preview hostname must be added to the same Access application as production so the login and `ACCESS_AUD` are the same. This is the intended configuration; its manual setup is still unverified in `docs/tasks.md`. Production deploys only from `master`.
 
 ## Considered Options
 

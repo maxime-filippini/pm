@@ -2,6 +2,8 @@
 
 A small, multiplayer project-management app for a Workspace of a few Members. Domain terms are defined in [`CONTEXT.md`](../CONTEXT.md). Architecture decisions are in [`docs/adr/`](./adr/).
 
+This spec describes the target v1 behavior; it does not imply every feature is implemented. See [`tasks.md`](./tasks.md) for implementation status and [`handoff.md`](./handoff.md) for the next steps and verification criteria.
+
 ## 1. Goals and non-goals
 
 **Goals**
@@ -27,7 +29,7 @@ A small, multiplayer project-management app for a Workspace of a few Members. Do
 | Client | React SPA, TanStack Router, Zustand, Tailwind, shadcn/ui; served as Worker static assets |
 | Shared | TypeScript + zod schemas for every command, change and snapshot |
 | Build | Vite + `@cloudflare/vite-plugin`, single package |
-| Tests | Vitest + `@cloudflare/vitest-pool-workers` |
+| Tests | Vitest + `@cloudflare/vitest-plugin` |
 | JWT verification | `jose` against the Access team JWKS |
 
 ### Repository layout
@@ -106,6 +108,7 @@ tasks       (id TEXT PK, project_id TEXT, number INT, feature_id TEXT NULL,
              status TEXT CHECK (status IN ('todo','in_progress','done','canceled')),
              assignee_id TEXT NULL, rank TEXT,
              created_by TEXT, created_at INT, updated_at INT, completed_at INT NULL,
+             deleted_at INT NULL, deleted_by TEXT NULL,
              UNIQUE(project_id, number))
 
 comments    (id TEXT PK, target_type TEXT CHECK (target_type IN ('feature','task')), target_id TEXT,
@@ -120,7 +123,8 @@ topics      (id TEXT PK, project_id TEXT, title TEXT, body TEXT, ref_type TEXT N
              author_id TEXT, created_at INT,
              outcome TEXT NULL, resolved_in_meeting_id TEXT NULL, resolved_at INT NULL)
 
-meetings    (id TEXT PK, project_id TEXT, started_at INT, started_by TEXT, ended_at INT NULL, ended_by TEXT NULL)
+meetings    (id TEXT PK, project_id TEXT, started_at INT, started_by TEXT, ended_at INT NULL, ended_by TEXT NULL,
+             deleted_at INT NULL, deleted_by TEXT NULL)
 meeting_attendees (meeting_id TEXT, member_id TEXT, PK(meeting_id, member_id))
 
 activity    (id TEXT PK, at INT, actor_id TEXT, via TEXT NULL, kind TEXT,
@@ -149,11 +153,12 @@ All messages are JSON and validated with zod on both ends.
 ### Server → client
 
 ```ts
-{ type: "snapshot", version, data: { members, projects, features, tasks, pullRequestLinks, topics, meetings } }
+{ type: "snapshot", version, memberId, data: { members, projects, features, tasks, pullRequestLinks, topics, meetings } }
 { type: "change",   version, cause?: commandId, changes: Array<{ entity, op: "upsert" | "delete", row }> }
 { type: "ack",      id: commandId }
 { type: "reject",   id: commandId, error: { code, message } }
 { type: "result",   id: queryId, data }
+{ type: "result_error", id: queryId, error: { code, message } }
 { type: "presence", members: Array<{ memberId, viewing?: Ref, editing?: { ref: Ref, field: string } }> }
 ```
 
@@ -175,6 +180,24 @@ All messages are JSON and validated with zod on both ends.
 - On reconnect, the client takes the fresh snapshot, re-applies still-pending commands on top of it, and resends them. Creates are idempotent by id, and updates are last write wins.
 - **"Changed while you were editing"**: when a field editor opens, it remembers the field's value. If a `change` for that field arrives from someone else, the editor shows "{name} changed this: view theirs / keep mine".
 - Presence: avatars on items people are viewing, and an "editing…" marker on fields. Presence is held only in socket attachments and broadcast on change. It is never stored.
+
+### Query contracts (remaining implementation)
+
+The contracts below are the target for the next implementation work. Currently only `activity.list({ before?: number, limit?: number }) → { items }` exists; its timestamp-only cursor must be extended before the feed ships. Query failures use `result_error` with the request id, rather than command `reject` messages.
+
+- **Comment target**: `{ type: "task" | "feature", id: string }`. The target must exist in this Workspace and a Task must not be soft deleted. Comments on a deleted Task are retained but hidden until it is restored. Create/edit bodies are trimmed, nonempty, and limited to 20,000 characters. Any Member may create; only the author may edit/delete. Repeated creates/deletes are idempotent.
+- **`comments.list`**: `{ target, cursor?: { createdAt, id }, limit?: number }` → `{ items: Comment[], nextCursor: { createdAt, id } | null }`. Default limit 50, range 1–200. Order by `(created_at ASC, id ASC)` and return rows strictly after the cursor. Fetch one extra row to determine `nextCursor`. The UI appends older-to-newer pages and offers Load more.
+- **`activity.list`**: `{ target?: { type, id }, cursor?: { at, id }, limit?: number }` → `{ items: Activity[], nextCursor: { at, id } | null }`. Default limit 50, range 1–200. No target means the whole Workspace; a target filters both `target_type` and `target_id`. Target types are `project`, `feature`, `task`, `topic`, or `meeting`. Order by `(at DESC, id DESC)` and return rows strictly before the cursor. Retain the old `before` argument during migration, but use the tuple cursor in new UI; reject requests supplying both. Deleted targets remain queryable for history and restoration. A page must not skip rows sharing a timestamp.
+- **`search`**: `{ text: string, limit?: number }` → `{ items: SearchResult[] }`. Trim text; require 1–200 characters. Default limit 20, range 1–50. Search this Workspace's non-archived Projects for Tasks, Features, and Topics. Exclude soft-deleted Tasks and Topics whose resolved Meeting is deleted. Include both unresolved and resolved Topics. Match Task keys case-insensitively and titles using SQL `LIKE`, binding parameters and escaping literal `%`, `_`, and the escape character. Rank an exact Task key first, then title prefixes, then other title matches; break ties by type and id. Results are capped, with no pagination in v1.
+- **Search result**: `{ type: "task" | "feature" | "topic", id, title, projectId, projectKey, taskNumber?: number, meetingId?: string | null }`. Task results open Task detail; Feature results open Feature detail; unresolved Topic results open that Project's Meetings page and focus the Topic. Resolved Topic results open the current Meeting or its past detail as appropriate. Search is Workspace-wide even when opened inside a Project; show the Project key on each result.
+
+For Comments and Activity, apply live changes only to loaded collections, upsert/delete by id, and preserve pagination boundaries. A query response must not overwrite a newer live edit/delete received while it was in flight. Refresh loaded collections after reconnect; pending commands are re-applied through the existing sync mechanism.
+
+### Restore after Undo expires (remaining implementation)
+
+The 8-second Undo toast and `task.restore` / `meeting.restore` already exist. The Activity view will provide a lasting Restore action on `task.deleted` and `meeting.deleted` entries; a separate Trash view is outside v1. Any Workspace Member may restore. Successful restore refreshes the affected view and history; already-restored commands are harmless. Older deletion entries must not offer Restore when a newer restore/deletion supersedes them: determine the latest deletion/restoration event for the target rather than relying on a possibly unloaded page. Extend deletion items in the query response with server-derived `canRestore: boolean`, separate from the stored Activity event, and refresh eligibility after live delete/restore changes.
+
+Restored Meetings stay closed. Their saved Outcomes return only for Topics still unresolved; later resolutions are preserved. Tasks and Features created during a deleted Meeting are retained. Deleted Tasks retain their numbers and their Comments and Feature linkage. Test repeated deletion/restoration cycles and Restore after a reconnect.
 
 ## 6. Commands
 
@@ -230,7 +253,8 @@ All views are responsive and work on a phone first.
 
 - **Workspace home**: list of Projects, each with its open Task count, Topics to discuss, and whether a Meeting is in progress.
 - **Project / Tasks**: list grouped by status, sortable by hand (drag on desktop, "move up/down" on mobile), with filters for status, assignee and Feature.
-- **My Tasks**: Tasks assigned to me across Projects, excluding `done` and `canceled` by default.
+- **Project navigation**: the Project switcher and Tasks / My Tasks / Features / Meetings tabs keep Members inside the selected Project. Switching Projects preserves the current tab. Task detail links include the Project key.
+- **My Tasks**: the Project tab shows Tasks assigned to me in that Project, excluding `done` and `canceled` by default. A separate Workspace-wide view remains available at `/w/:slug/me` and through the Project switcher; it groups Tasks by active Project.
 - **Features**: per Project, `proposed` first, then `accepted` with Task progress (n/m done), then `done` and `rejected` collapsed.
 - **Feature detail**: description, status controls (with who decided and when), Tasks, Comments, Activity.
 - **Task detail**: key, title, description, status, assignee, Feature, Pull Request links with state badges, Comments, Activity.
@@ -251,10 +275,10 @@ Markdown fields (descriptions, Comments, Topic bodies, Outcomes) use a textarea 
 
 ## 10. Testing
 
-Vitest with `@cloudflare/vitest-pool-workers`:
+Vitest with `@cloudflare/vitest-plugin`:
 - **Commands**: one test file per entity, covering validation, domain rules (§4), and the Activity each command writes.
 - **Sync**: a socket connects and receives the snapshot. One client's command reaches another client as a `change`. A reject rolls back. A create retried with the same id is a no-op.
-- **Hibernation**: sockets are accepted through `ctx.acceptWebSocket` (`ctx.getWebSockets()` returns them). A fresh DO instance rebuilt from only storage and attachments serves commands and presence correctly. No `setTimeout`/`setInterval` in `src/worker/workspace/` (enforced by a lint rule).
+- **Hibernation**: sockets are accepted through `ctx.acceptWebSocket` (`ctx.getWebSockets()` returns them). A fresh DO instance rebuilt from only storage and attachments serves commands and presence correctly. No `setTimeout`/`setInterval` in `src/worker/workspace/` (enforced by `test/no-timers.test.ts`).
 - **Auth**: an invalid or missing JWT gets a 401, a non-member gets a 403, and `DEV_ACCESS_EMAIL` together with `ACCESS_AUD` fails closed.
 - **GitHub**: state mapping and error mapping, with `fetch` mocked.
 
