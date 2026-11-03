@@ -60,12 +60,12 @@ export function ProjectTasksPage() {
 
       {archived && <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">This Project is archived. Unarchive it to add Tasks.</p>}
 
-      <div className={archived ? "" : "grid gap-8 md:grid-cols-[14rem_minmax(0,1fr)] md:gap-10"}>
+      <div className="space-y-10">
         {!archived && (
-          <section aria-label="Add a Task" className="space-y-4 md:border-r md:pr-8">
+          <section aria-label="Add a Task" className="space-y-4 border-l border-border/60 pl-5">
             <SectionHeader title="Add a Task" description="Start with a short title. Add details after creating the Task." />
-            <form onSubmit={create} className="flex flex-col gap-2 sm:flex-row md:flex-col">
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs doing?" aria-label="New Task title" maxLength={200} />
+            <form onSubmit={create} className="flex flex-col gap-3 sm:flex-row">
+              <Input className="min-w-0 flex-1" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs doing?" aria-label="New Task title" maxLength={200} />
               <Button type="submit" disabled={!title.trim()}><PlusIcon /> Add Task</Button>
             </form>
             {(featureId || assignee) && <p className="text-xs leading-relaxed text-muted-foreground">New Tasks use the selected Feature and assignee filters.</p>}

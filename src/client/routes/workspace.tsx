@@ -32,7 +32,10 @@ function WorkspaceShell({ slug }: { slug: string }) {
       <div className="flex min-w-0 flex-1 items-center gap-3 lg:flex-none lg:px-3">
         <Dialog.Trigger asChild><Button variant="ghost" size="icon" className="size-10 lg:hidden" aria-label="Open navigation"><MenuIcon /></Button></Dialog.Trigger>
         <Link to="/" className="shrink-0 font-heading text-lg font-semibold tracking-tight" title="All Workspaces">PM</Link>
-        <span className="truncate text-sm text-muted-foreground lg:hidden">{project?.name ?? "Workspace"}</span>
+        <div className="min-w-0 lg:hidden">
+          <p className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">{key ? "Project view" : "Workspace view"}</p>
+          <p className="truncate text-sm">{project?.name ?? key ?? slug}</p>
+        </div>
       </div>
       <QuickJump navigation />
       <div className="hidden min-h-0 flex-1 overflow-y-auto lg:block"><Navigation slug={slug} projectKey={key} /></div>
@@ -40,7 +43,7 @@ function WorkspaceShell({ slug }: { slug: string }) {
     </header>
 
     <main id="workspace-content" tabIndex={-1} className="min-w-0 outline-none lg:pl-60">
-      <div className="mx-auto w-full max-w-5xl px-4 pt-8 pb-24 sm:px-8 sm:pt-10 lg:px-10">
+      <div className="w-full px-4 pt-8 pb-24 sm:px-8 sm:pt-10 lg:px-10 xl:px-12">
         <div className="mb-3 lg:hidden"><ConnectionBadge /></div>
         <Gate><Outlet /></Gate>
       </div>
@@ -50,7 +53,7 @@ function WorkspaceShell({ slug }: { slug: string }) {
       <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 lg:hidden" />
       <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-[min(20rem,calc(100vw-3rem))] flex-col bg-background px-5 py-5 shadow-xl lg:hidden">
         <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-        <Dialog.Description className="sr-only">Navigate your Workspace and switch Projects.</Dialog.Description>
+        <Dialog.Description className="sr-only">{key ? "Navigate this Project, switch Projects or return to the Workspace." : "Navigate this Workspace or open a Project."}</Dialog.Description>
         <div className="mb-8 flex items-center justify-between">
           <Link to="/" className="font-heading text-lg font-semibold" title="All Workspaces" onClick={() => setOpen(false)}>PM</Link>
           <Dialog.Close asChild><Button variant="ghost" size="icon" className="size-10" aria-label="Close navigation"><XIcon /></Button></Dialog.Close>
@@ -66,24 +69,24 @@ const activeItem = "bg-muted/70 font-medium text-foreground";
 const groupLabel = "px-3 text-[11px] font-medium tracking-widest text-muted-foreground/70 uppercase";
 
 function Navigation({ slug, projectKey, onNavigate }: { slug: string; projectKey?: string; onNavigate?: () => void }) {
-  const projects = useWorkspace((s) => s.view.projects);
-  return <nav aria-label="Main navigation" className="space-y-8" onClick={(event) => {
+  return <nav aria-label={projectKey ? "Project navigation" : "Workspace navigation"} className="space-y-8" onClick={(event) => {
     if ((event.target as HTMLElement).closest("a")) onNavigate?.();
   }}>
-    <div className="space-y-2">
-      <p className={groupLabel}>Workspace</p>
-      <Link to="/w/$slug" params={{ slug }} activeOptions={{ exact: true }} className={item} activeProps={{ className: activeItem }}>
-        {projectKey ? <ArrowLeftIcon className="size-4" /> : <FolderIcon className="size-4" />} {projectKey ? "Back to Workspace" : "Projects"}
-      </Link>
-      {!projectKey && <Link to="/w/$slug/me" params={{ slug }} className={item} activeProps={{ className: activeItem }}><CheckSquareIcon className="size-4" /> My Tasks</Link>}
-      <Link to="/w/$slug/activity" params={{ slug }} className={item} activeProps={{ className: activeItem }}><ActivityIcon className="size-4" /> Activity</Link>
-    </div>
-    {projectKey ? <ProjectNavigation slug={slug} projectKey={projectKey} onNavigate={onNavigate} /> : <div className="space-y-2">
-      <p className={groupLabel}>Projects</p>
-      {Object.values(projects).filter((p) => p.archivedAt === null).sort((a, b) => a.name.localeCompare(b.name)).map((p) => <Link key={p.id} to="/w/$slug/p/$key" params={{ slug, key: p.key }} className={item}>
-        <span className="w-8 shrink-0 font-mono text-[10px] text-muted-foreground">{p.key}</span><span className="truncate">{p.name}</span>
-      </Link>)}
-    </div>}
+    {projectKey ? <>
+      <ProjectNavigation slug={slug} projectKey={projectKey} onNavigate={onNavigate} />
+      <Link to="/w/$slug" params={{ slug }} activeOptions={{ exact: true }} className={item}><ArrowLeftIcon className="size-4" /> Back to Workspace</Link>
+    </> : <div className="space-y-2">
+        <div className="space-y-1 pb-3">
+          <p className={groupLabel}>Workspace view</p>
+          <p className="truncate px-3 text-sm font-medium">{slug}</p>
+        </div>
+        <Link to="/w/$slug" params={{ slug }} activeOptions={{ exact: true }} className={item} activeProps={{ className: activeItem }}>
+          <FolderIcon className="size-4" /> Projects
+        </Link>
+        <Link to="/w/$slug/me" params={{ slug }} className={item} activeProps={{ className: activeItem }}><CheckSquareIcon className="size-4" /> My Tasks</Link>
+        <Link to="/w/$slug/activity" params={{ slug }} className={item} activeProps={{ className: activeItem }}><ActivityIcon className="size-4" /> Activity</Link>
+      </div>
+    }
   </nav>;
 }
 
@@ -101,7 +104,7 @@ function ProjectNavigation({ slug, projectKey, onNavigate }: { slug: string; pro
     return Boolean(project && Object.values(s.view.meetings).some((m) => m.projectId === project.id && m.endedAt === null));
   });
   return <div className="space-y-2">
-    <p className={groupLabel}>Project</p>
+    <p className={groupLabel}>Project view</p>
     <ProjectSwitcher slug={slug} projectKey={projectKey} tab={onSettings ? "settings" : onMyTasks ? "me" : onFeatures ? "features" : onMeetings ? "meetings" : "tasks"} onNavigate={onNavigate} />
     <div className="space-y-1 pt-2">
       <Link to="/w/$slug/p/$key" params={params} activeOptions={{ exact: true }} className={cn(item, onTasks && activeItem)} aria-current={onTasks ? "page" : undefined}><ListTodoIcon className="size-4" /> Tasks</Link>
