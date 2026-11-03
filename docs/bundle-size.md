@@ -7,7 +7,7 @@ Use `pnpm build && pnpm bundle:report` to reproduce the after measurements. The 
 - Before: one JavaScript file, **825,231 bytes / 254,205 gzip bytes** loaded on every route.
 - After, entry plus all static imports: **341,172 bytes / 109,019 gzip bytes**; no route modules in that graph.
 - After, Home plus its static imports: **390,618 bytes / 129,130 gzip bytes**, a **52.7%** raw / **49.2%** gzip reduction from the previous Home load.
-- The entry file itself is 239,624 bytes; this alone is not the full initial payload.
+- The entry file itself is 239,620 bytes; this alone is not the full initial payload.
 
 All screen components use TanStack Router’s lazy route components. The Project layout is separate from Task list screens, shared Feature progress UI lives outside route modules, and plain Task cards no longer import drag-and-drop code.
 

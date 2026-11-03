@@ -181,9 +181,9 @@ All messages are JSON and validated with zod on both ends.
 - **"Changed while you were editing"**: when a field editor opens, it remembers the field's value. If a `change` for that field arrives from someone else, the editor shows "{name} changed this: view theirs / keep mine".
 - Presence: avatars on items people are viewing, and an "editing…" marker on fields. Presence is held only in socket attachments and broadcast on change. It is never stored.
 
-### Query contracts (remaining implementation)
+### Query contracts
 
-The contracts below are the target for the next implementation work. `comments.list` is implemented. `activity.list` currently supports only `{ before?: number, limit?: number } → { items }`; its timestamp-only cursor must be extended before the feed ships. Query failures use `result_error` with the request id, rather than command `reject` messages.
+Comments, Activity and search implement the contracts below. Activity retains the legacy timestamp-only `before` argument for compatibility; new views use tuple cursors. Query failures use `result_error` with the request id, rather than command `reject` messages.
 
 - **Comment target**: `{ type: "task" | "feature", id: string }`. The target must exist in this Workspace and a Task must not be soft deleted. Comments on a deleted Task are retained but hidden until it is restored. Create/edit bodies are trimmed, nonempty, and limited to 20,000 characters. Any Member may create; only the author may edit/delete. Repeated creates/deletes are idempotent.
 - **`comments.list`**: `{ target, cursor?: { createdAt, id }, limit?: number }` → `{ items: Comment[], nextCursor: { createdAt, id } | null }`. Default limit 50, range 1–200. Order by `(created_at ASC, id ASC)` and return rows strictly after the cursor. Fetch one extra row to determine `nextCursor`. The UI appends older-to-newer pages and offers Load more.
@@ -193,7 +193,7 @@ The contracts below are the target for the next implementation work. `comments.l
 
 For Comments and Activity, apply live changes only to loaded collections, upsert/delete by id, and preserve pagination boundaries. A query response must not overwrite a newer live edit/delete received while it was in flight. Refresh loaded collections after reconnect; pending commands are re-applied through the existing sync mechanism.
 
-### Restore after Undo expires (remaining implementation)
+### Restore after Undo expires
 
 The 8-second Undo toast and `task.restore` / `meeting.restore` already exist. The Activity view will provide a lasting Restore action on `task.deleted` and `meeting.deleted` entries; a separate Trash view is outside v1. Any Workspace Member may restore. Successful restore refreshes the affected view and history; already-restored commands are harmless. Older deletion entries must not offer Restore when a newer restore/deletion supersedes them: determine the latest deletion/restoration event for the target rather than relying on a possibly unloaded page. Extend deletion items in the query response with server-derived `canRestore: boolean`, separate from the stored Activity event, and refresh eligibility after live delete/restore changes.
 

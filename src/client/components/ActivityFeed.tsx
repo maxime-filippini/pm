@@ -55,6 +55,7 @@ export function ActivityFeed({ target }: { target?: ActivityTarget }) {
           setItems((old) => sort([item, ...old.filter((a) => a.id !== item.id)]));
         }
         if (/^(task|meeting)\.(deleted|restored)$/.test(item.kind)) {
+          generation.current++; // Invalidate queries immediately, before the refresh effect runs.
           // Eligibility is server-derived; clear stale actions immediately and reload.
           setItems((old) => old.map((a) => a.targetType === item.targetType && a.targetId === item.targetId ? { ...a, canRestore: false } : a));
           live.current.forEach((a, id) => { if (a.targetType === item.targetType && a.targetId === item.targetId) live.current.delete(id); });
@@ -90,10 +91,18 @@ function ActivityRow({ item }: { item: ActivityItem }) {
     if (item.targetType === "meeting" && meeting) { label = "Meeting " + new Date(meeting.startedAt).toLocaleDateString(); href = base + "/meetings/" + meeting.id; }
     if (item.targetType === "topic" && topic) { label = topic.title; href = base + "/meetings" + (topic.resolvedInMeetingId ? "/" + topic.resolvedInMeetingId : "") + "#topic-" + topic.id; }
   }
-  const action = item.kind.split(".").slice(1).join(" ").replaceAll("_", " ");
+  const action = item.kind === "project.github_token" ? "updated GitHub access for" : item.kind === "pr.state" ? "refreshed Pull Request state for" : item.kind.split(".").slice(1).join(" ").replaceAll("_", " ");
+  const field = typeof item.data.field === "string" ? item.data.field : null;
+  const fieldLabel = field ? ({ assigneeId: "Assignee", featureId: "Feature", title: "Title", description: "Description", status: "Status", name: "Name" } as Record<string, string>)[field] ?? "Details" : null;
+  const describeValue = (value: unknown): string => {
+    if (field === "assigneeId") return value ? data.members[String(value)]?.name ?? "Former Member" : "Unassigned";
+    if (field === "featureId") return value ? data.features[String(value)]?.title ?? "Feature" : "Standalone Task";
+    if (field === "status") return ({ todo: "Todo", in_progress: "In progress", done: "Done", canceled: "Canceled", proposed: "Proposed", accepted: "Accepted", rejected: "Rejected" } as Record<string, string>)[String(value)] ?? String(value);
+    return String(value ?? "none");
+  };
   return <li className="space-y-1 py-3 text-sm">
     <p><span className="font-medium">{member}</span>{item.via && <span className="text-muted-foreground"> via {item.via}</span>} · {item.kind.startsWith("comment.") ? "Comment " : ""}{action} {href ? <Link to={href} className="underline">{label}</Link> : <span>{label}{item.kind.endsWith(".deleted") && " (deleted)"}</span>}</p>
-    {typeof item.data.field === "string" && <p className="break-words text-muted-foreground">{String(item.data.field)}{item.data.to !== undefined && `: ${String(item.data.from ?? "none")} → ${String(item.data.to ?? "none")}`}</p>}
+    {fieldLabel && <p className="break-words text-muted-foreground">{fieldLabel}{item.data.to !== undefined && `: ${describeValue(item.data.from)} → ${describeValue(item.data.to)}`}</p>}
     <p className="text-xs text-muted-foreground"><time dateTime={new Date(item.at).toISOString()}>{new Date(item.at).toLocaleString()}</time></p>
     {item.canRestore && <Button size="sm" variant="outline" onClick={() => socket.send(item.targetType === "task" ? "task.restore" : "meeting.restore", { id: item.targetId })}>Restore {item.targetType === "task" ? "Task" : "Meeting"}</Button>}
   </li>;
