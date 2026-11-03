@@ -1,28 +1,21 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, Link, Outlet, RouterProvider, useParams } from "@tanstack/react-router";
+import { AppShell } from "@/components/AppShell";
+import { MeProvider } from "./api";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "@/components/ui/sonner";
 import "./index.css";
 
 const rootRoute = createRootRoute({
-  component: () => (
-    <div className="mx-auto max-w-5xl px-3 pt-3 pb-24 sm:px-4 sm:pt-4">
-      <AppHeader />
-      <Outlet />
-      <Toaster position="bottom-center" />
-    </div>
-  ),
+  component: AppFrame,
 });
 
-/** Workspace pages carry their own top bar. */
-function AppHeader() {
+function AppFrame() {
   const { slug } = useParams({ strict: false });
-  if (slug) return null;
-  return (
-    <header className="mb-4">
-      <Link to="/" className="font-heading text-lg font-semibold">PM</Link>
-    </header>
-  );
+  return <MeProvider>
+    {slug ? <Outlet /> : <AppShell><Outlet /></AppShell>}
+    <Toaster position="bottom-center" />
+  </MeProvider>;
 }
 
 const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: lazyRouteComponent(() => import("./routes/home"), "HomePage") });

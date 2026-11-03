@@ -2,7 +2,7 @@
 
 Measured on 2026-11-03 with the same installed dependencies, default production minification and `pnpm build`. Before: `style/page-sections` (`a608d96`). After: route-splitting implementation.
 
-Use `pnpm build && pnpm bundle:report` to reproduce the after measurements. The report follows only static imports in Vite’s manifest and sums the bytes and Node `gzipSync` size of each JavaScript file. Gzip figures can differ slightly from Vite’s build-log estimates. CSS, fonts and API data are excluded from these JavaScript figures.
+Use `pnpm build && pnpm bundle:report` to measure the current branch. The before/after figures below record the original route-splitting change. The report follows only static imports in Vite’s manifest and sums the bytes and Node `gzipSync` size of each JavaScript file. Gzip figures can differ slightly from Vite’s build-log estimates. CSS, fonts and API data are excluded from these JavaScript figures.
 
 - Before: one JavaScript file, **825,231 bytes / 254,205 gzip bytes** loaded on every route.
 - After, entry plus all static imports: **341,172 bytes / 109,019 gzip bytes**; no route modules in that graph.
@@ -20,3 +20,7 @@ Normal links then opened Projects, a Project Task list, Features, Meetings and s
 A temporary local proxy returned 503 for the Task route chunk: the screen displayed **This page could not load**, **Reload page** and **Go home**. Changing the proxy to a two-second chunk delay and selecting Reload showed **Loading page…**, then the Task screen. No build assets or repository files were altered for this simulation.
 
 This is build/network verification, not a Lighthouse or Core Web Vitals measurement. No browser performance-trace tools were available in this session.
+
+## Shared navigation shell
+
+After adding the sidebar and context switcher to Home and Admin in #24, the 2026-11-03 production manifest reports **472,634 bytes / 153,194 gzip bytes** for the entry graph and **483,877 bytes / 157,746 gzip bytes** for Home with its static imports. The additional navigation primitives load on Home because the sidebar is now available there. The entry graph still contains no route modules; unopened screens remain separate lazy chunks. These figures supersede the original 390,618-byte Home figure for the current branch.

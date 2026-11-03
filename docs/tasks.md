@@ -49,7 +49,7 @@ Work breakdown for [`spec.md`](./spec.md), grouped by milestone (§11). A checke
 - [x] Router (TanStack), Zustand store fed by socket, Tailwind
 - [x] shadcn/ui (radix-nova, dark only; Sonner toasts; project switcher as a dropdown menu)
 - [x] Sync layer: socket with backoff, ping every 30 s, pending queue, optimistic apply, rollback + toast on reject, replay after reconnect
-- [x] Project-scoped navigation: inside a Project the top bar is a Project switcher plus Tasks / My Tasks / Features / Meetings tabs, Task pages live under the Project (`/w/:slug/p/:key/t/:n`, with `/w/:slug/t/WEB-12` redirecting), and the app reopens the last Project
+- [x] Project-scoped navigation: all views share a full-width shell with a context switcher (Workspace/Projects), scoped navigation and Admin footer access; Project view has Tasks / My Tasks / Features / Meetings / Settings links, shown in a desktop sidebar or phone drawer, Task pages live under the Project (`/w/:slug/p/:key/t/:n`, with `/w/:slug/t/WEB-12` redirecting), and the app reopens the last Project
 - [x] Views: Workspace home (Project list), Project / Tasks (grouped by status, assignee filter, move up/down), Task detail (basic), My Tasks
 - [x] Drag to reorder with `@dnd-kit/sortable`: cards lift and the others slide aside (mouse anywhere on the card, keyboard from the grip); up/down buttons on touch screens
 - [ ] Mobile-first layout (bigger tap targets, sticky top bar, checked at 375 px; still needs a pass on a real phone)

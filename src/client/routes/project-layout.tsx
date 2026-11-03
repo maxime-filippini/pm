@@ -4,7 +4,7 @@ import { Empty } from "@/components/common";
 import { setLastProject } from "../last-project";
 import { useWorkspace } from "../store/workspace";
 
-/** Every page inside a Project renders here, under the Project nav in the top bar. */
+/** Every page inside a Project renders here, under the Project navigation in the shared shell. */
 export function ProjectLayout() {
   const { slug, key } = useParams({ from: "/w/$slug/p/$key" });
   const exists = useWorkspace((s) => Object.values(s.view.projects).some((p) => p.key === key));

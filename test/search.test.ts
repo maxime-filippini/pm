@@ -3,6 +3,28 @@ import { uuidv7 } from "../src/shared/ids";
 import type { SearchResult } from "../src/shared/entities";
 import { connect, freshWorkspaceId, newMember } from "./helpers";
 describe("Workspace search", () => {
+  it("scopes every result type to the selected Project before applying the limit", async () => {
+    const client = await connect(freshWorkspaceId(), newMember());
+    const first = uuidv7(), selected = uuidv7();
+    for (const [projectId, key] of [[first, "WEB"], [selected, "APP"]] as const) {
+      await client.command("project.create", { id: projectId, key, name: key });
+      await client.command("task.create", { id: uuidv7(), projectId, title: "Scope check Task" });
+      await client.command("feature.create", { id: uuidv7(), projectId, title: "Scope check Feature" });
+      await client.command("topic.create", { id: uuidv7(), projectId, title: "Scope check Topic" });
+    }
+    const scoped = (await client.query("search", { text: "Scope check", projectId: selected })).data as { items: SearchResult[] };
+    expect(scoped.items.map((r) => r.type).sort()).toEqual(["feature", "task", "topic"]);
+    expect(scoped.items.every((r) => r.projectId === selected)).toBe(true);
+    const limited = (await client.query("search", { text: "Scope check", projectId: selected, limit: 1 })).data as { items: SearchResult[] };
+    expect(limited.items).toHaveLength(1);
+    expect(limited.items[0]?.projectId).toBe(selected);
+    expect((await client.query("search", { text: "WEB-1", projectId: selected })).data).toEqual({ items: [] });
+    expect((await client.query("search", { text: "APP-1", projectId: selected })).data).toMatchObject({ items: [{ type: "task", projectId: selected }] });
+    expect((await client.query("search", { text: "Scope check", projectId: uuidv7() })).data).toEqual({ items: [] });
+    expect(((await client.query("search", { text: "Scope check" })).data as { items: SearchResult[] }).items).toHaveLength(6);
+    await client.command("project.archive", { id: selected });
+    expect((await client.query("search", { text: "Scope check", projectId: selected })).data).toEqual({ items: [] });
+  });
   it("ranks exact keys, prefixes and substrings; escapes wildcards and excludes archived/deleted work", async () => {
     const workspace = freshWorkspaceId();
     const client = await connect(workspace, newMember());
@@ -32,7 +54,7 @@ describe("Workspace search", () => {
     const page = (await client.query("search", { text: "Searchable" })).data as { items: SearchResult[] };
     expect(page.items[0]).toMatchObject({ type: "topic", projectKey: "APP", meetingId });
     expect((await other.query("search", { text: "Searchable" })).data).toEqual({ items: [] });
-    for (const args of [{ text: " " }, { text: "a".repeat(201) }, { text: "x", limit: 51 }]) {
+    for (const args of [{ text: " " }, { text: "a".repeat(201) }, { text: "x", limit: 51 }, { text: "x", projectId: "" }]) {
       const id = uuidv7();
       client.ws.send(JSON.stringify({ type: "query", id, name: "search", args }));
       expect((await client.next("result_error", (m) => m.id === id)).error.code).toBe("invalid");

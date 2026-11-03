@@ -16,7 +16,7 @@ export const ClientMessage = z.discriminatedUnion("type", [
 export type ClientMessage = z.infer<typeof ClientMessage>;
 
 export const querySchemas = {
-  "search": z.object({ text: z.string().trim().min(1).max(200), limit: z.number().int().min(1).max(50).default(20) }),
+  "search": z.object({ text: z.string().trim().min(1).max(200), projectId: Id.optional(), limit: z.number().int().min(1).max(50).default(20) }),
   "comments.list": z.object({ target: CommentTarget, cursor: z.object({ createdAt: z.number().int(), id: Id }).optional(), limit: z.number().int().min(1).max(200).default(50) }),
   "activity.list": z.object({
     target: ActivityTarget.optional(), before: z.number().int().optional(),

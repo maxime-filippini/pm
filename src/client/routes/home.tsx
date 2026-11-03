@@ -18,7 +18,6 @@ export function HomePage() {
   return (
     <div className="space-y-5">
       <PageHeader title="Your Workspaces" description="Open a Workspace to see the Projects you share with its Members." />
-      <p className="text-sm text-muted-foreground">Signed in as {me.email}</p>
       <SectionHeader title="Workspaces" />
       {me.workspaces.length === 0 ? (
         <Empty>You have not been invited to a Workspace yet.</Empty>
@@ -31,22 +30,14 @@ export function HomePage() {
             ))}
         </ul>
       )}
-      {me.isAdmin && (
-        <Link to="/admin" className="inline-block text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
-          Admin: Workspaces and Members →
-        </Link>
-      )}
     </div>
   );
 }
 
-/** Opens the Project you last worked in, or the Project list the first time. */
+/** Explicit Workspace choices open Workspace view; automatic reopening happens above. */
 function WorkspaceLink({ slug, name }: { slug: string; name: string }) {
-  const key = getLastProject(slug);
   const className = "block rounded-md px-3 py-3 text-sm font-medium transition-colors hover:bg-muted/40";
-  return key ? (
-    <Link to="/w/$slug/p/$key" params={{ slug, key }} className={className}>{name}</Link>
-  ) : (
+  return (
     <Link to="/w/$slug" params={{ slug }} className={className}>{name}</Link>
   );
 }
