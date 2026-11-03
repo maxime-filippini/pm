@@ -1,5 +1,6 @@
 import type { Command } from "../../../shared/commands";
 import type { CommandContext } from "../context";
+import * as feature from "./feature";
 import * as meeting from "./meeting";
 import * as project from "./project";
 import * as task from "./task";
@@ -11,6 +12,10 @@ export function apply(ctx: CommandContext, command: Command): void {
     case "project.rename": return project.rename(ctx, command.args);
     case "project.archive": return project.setArchived(ctx, command.args, true);
     case "project.unarchive": return project.setArchived(ctx, command.args, false);
+    case "feature.create": return feature.create(ctx, command.args);
+    case "feature.update": return feature.update(ctx, command.args);
+    case "feature.setStatus": return feature.setStatus(ctx, command.args);
+    case "meeting.createFeature": return meeting.createFeature(ctx, command.args);
     case "task.create": return task.create(ctx, command.args);
     case "task.update": return task.update(ctx, command.args);
     case "task.setStatus": return task.setStatus(ctx, command.args);

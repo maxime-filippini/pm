@@ -1,8 +1,9 @@
 import type { CommandArgs } from "../../../shared/commands";
 import { taskKey } from "../../../shared/entities";
 import { CommandContext, CommandError } from "../context";
-import { all, GROUP_BY_MEETING, MEETING_SELECT, one, toActivity, toMeeting, toMember, toTask, toTopic } from "../rows";
+import { all, GROUP_BY_MEETING, MEETING_SELECT, one, toActivity, toFeature, toMeeting, toMember, toTask, toTopic } from "../rows";
 import { getProject } from "./project";
+import * as feature from "./feature";
 import * as task from "./task";
 import { emitTopic, getTopic } from "./topic";
 
@@ -163,4 +164,16 @@ export function restore(ctx: CommandContext, args: CommandArgs<"meeting.restore"
   ctx.activity("meeting.restored", "meeting", args.id, { topics: restored.length });
   emitMeeting(ctx, args.id);
   for (const id of restored) emitTopic(ctx, id);
+}
+
+/** The Feature and its Outcome are committed together, just like meeting.createTask. */
+export function createFeature(ctx: CommandContext, args: CommandArgs<"meeting.createFeature">) {
+  if (one(ctx.sql, toFeature, "SELECT * FROM features WHERE id = ?", args.featureId)) return;
+  const { topic, meeting } = topicForOutcome(ctx, args.topicId);
+  feature.create(ctx, { id: args.featureId, projectId: topic.projectId, title: args.title, description: args.description ?? topic.body });
+  const line = `Proposed Feature: ${args.title}`;
+  const outcome = topic.outcome ? `${topic.outcome}\n${line}` : line;
+  setOutcome(ctx, topic.id, meeting.id, outcome);
+  ctx.activity("topic.resolved", "topic", topic.id, { meetingId: meeting.id, outcome, featureId: args.featureId });
+  emitTopic(ctx, topic.id);
 }

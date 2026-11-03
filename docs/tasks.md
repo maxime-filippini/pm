@@ -62,8 +62,8 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [x] Soft delete for Tasks and Meetings (`task.delete/restore`, `meeting.delete/restore`), Undo toast; a deleted Meeting's Topics go back on the agenda
 
 ## M2: Planning
-- [ ] Features: `feature.create/update/setStatus`, `decided_by/at`, Features view, Feature detail, "Mark Feature done?" prompt
-- [ ] Feature–Task linkage (same Project only; UI suggests accepted)
+- [x] Features: `feature.create/update/setStatus`, `decided_by/at`, Features view, Feature detail, "Mark Feature done?" prompt
+- [x] Feature–Task linkage (same Project only; UI suggests accepted)
 - [ ] Comments: `comment.create/edit/delete` (author only), `comments.list` query, live changes applied only when loaded
 - [ ] Activity feed view (paged `activity.list`) and per-item Activity
 - [ ] Presence (viewing/editing) and "changed while you were editing" warning
@@ -77,7 +77,7 @@ Topics and Meetings are per Project (a "Meetings" tab next to Tasks / My Tasks).
 - [x] Topics: `topic.create/update/move/delete` (author only, unresolved only), reorderable list, optional related Task
 - [x] Meetings: `meeting.start/setAttendees/recordOutcome/clearOutcome/close`, one open per Project, carry-over
 - [x] Meeting view: attendees, Outcome boxes, related Task status/assignee, "create Task" with assignee (`meeting.createTask` notes the key in the Outcome), Close with confirmation
-- [ ] "Create Feature" from a Topic (needs Features, M2)
+- [x] "Create Feature" from a Topic (creates a proposal and records its Outcome atomically)
 - [x] Past Meetings list and detail (from the snapshot; no `meeting.get` query needed)
 - [x] Projects list: Topics to discuss and "Meeting in progress"
 - [x] Tests: Topic rules, one open Meeting per Project, Outcomes only while open, carry-over, closed Meetings read-only, `meeting.createTask`
