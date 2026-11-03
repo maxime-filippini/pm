@@ -56,13 +56,11 @@ app.get("/w/:slug/export", async (c) => {
   return c.json({ ...data, workspace: { id: workspace.id, slug: workspace.slug, name: workspace.name } });
 });
 
-// Each MCP request resolves identity and registry membership anew, including tools/list.
-app.all("/w/:slug/mcp", async (c) => {
+// Account-level MCP connection; each Workspace tool checks registry membership.
+app.all("/mcp", async (c) => {
   const member = c.get("member");
   if (!member) return c.json({ error: "Not invited" }, 403);
-  const workspace = await workspaceForMember(c.env.DB, c.req.param("slug"), member.id);
-  if (!workspace) return c.json({ error: "Not a member of this Workspace" }, 403);
-  return handleMcp(c.req.raw, c.env.WORKSPACE.getByName(workspace.id), member);
+  return handleMcp(c.req.raw, c.env, member);
 });
 
 // ---- Workspace socket ----
