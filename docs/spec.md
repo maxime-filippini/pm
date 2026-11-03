@@ -18,7 +18,7 @@ A small, multiplayer project-management app for a Workspace of a few Members. Do
 
 | Layer | Choice |
 |---|---|
-| Hosting | One Cloudflare Worker on `pm.maximefilippini.me`; `workers.dev` and preview URLs disabled |
+| Hosting | One Cloudflare Worker on `pm.maximefilippini.me`; `workers.dev` and preview URLs disabled. Feature branches deploy to a separate `pm-preview` Worker ([ADR 0005](./adr/0005-one-shared-preview-environment.md)) |
 | Auth | Cloudflare Access (email allowlist) in front of the hostname; the Worker verifies the Access JWT ([ADR 0003](./adr/0003-cloudflare-access-as-sole-authentication.md)) |
 | Worker routing | Hono |
 | Workspace data | One SQLite-backed Durable Object per Workspace ([ADR 0001](./adr/0001-one-durable-object-per-workspace.md)), raw SQL plus numbered migrations |
