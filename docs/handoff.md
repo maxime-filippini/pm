@@ -24,7 +24,7 @@ Last implementation verification: 47 tests passed, typecheck/build/convention ch
 
 ## Comments implementation (current branch)
 
-Step 1 is implemented on `feat/comments`: author-only edit/delete, target validation, tuple pagination, Activity attribution, optimistic rollback, loaded-target state, query/live race reconciliation, and reconnect reloads. The existing Comments table is reused. This work is separate from the merged baseline above; it is not merged or deployed to production.
+Step 1 is implemented in [PR #12](https://github.com/maxime-filippini/pm/pull/12) on `feat/comments`: author-only edit/delete, target validation, tuple pagination, Activity attribution, optimistic rollback, loaded-target state, query/live race reconciliation, and reconnect reloads. The existing Comments table is reused. This work is separate from the merged baseline above; it is not merged or deployed to production.
 
 Validation: 55 passing runtime and client-store tests; typecheck, full tests, build, convention and diff checks; local browser post/edit/delete on both detail pages, cross-tab edits/deletes, and 375 px layouts without horizontal overflow. Browser check Comments were deleted afterward. The initial bundle remains about 678 KB / 211 KB gzip; step 9 is still pending.
 
