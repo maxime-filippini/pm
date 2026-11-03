@@ -6,8 +6,8 @@ import { EditingMembers, useEditingTarget } from "./Presence";
 import { Button } from "./ui/button";
 
 /** Guard explicit-save forms as well as the autosave fields. */
-export function ConcurrentDraft({ value, draft, field, target: explicit, onUseTheirs, children }: {
-  value: string; draft: string; field: string; target?: Ref; onUseTheirs: () => void; children: ReactNode;
+export function ConcurrentDraft({ value, draft, field, theirs, target: explicit, onUseTheirs, children }: {
+  value: string; draft: string; field: string; theirs?: string; target?: Ref; onUseTheirs: () => void; children: ReactNode;
 }) {
   const socket = useSocket(), context = useEditingTarget(), target = explicit ?? context;
   const [base, setBase] = useState(value), [show, setShow] = useState(false);
@@ -25,7 +25,7 @@ export function ConcurrentDraft({ value, draft, field, target: explicit, onUseTh
         <Button type="button" size="sm" variant="outline" onClick={() => { setBase(value); setShow(false); }}>Keep mine</Button>
         <Button type="button" size="sm" variant="ghost" onClick={() => { onUseTheirs(); setBase(value); setShow(false); }}>Use theirs</Button>
       </div>
-      {show && <p className="whitespace-pre-wrap break-words">{value || "(empty)"}</p>}
+      {show && <p className="whitespace-pre-wrap break-words">{theirs ?? (value || "(empty)")}</p>}
     </div>}
   </div>;
 }

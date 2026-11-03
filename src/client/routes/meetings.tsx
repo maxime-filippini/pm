@@ -264,7 +264,7 @@ function TopicEditor({ project, topic, onDone }: { project: Project; topic: Topi
     onDone();
   };
   return (
-    <ConcurrentDraft target={{ type: "topic", id: topic.id }} field="body" value={JSON.stringify([topic.title, topic.body, topic.refId])} draft={JSON.stringify([title, body, taskId || null])} onUseTheirs={() => { setTitle(topic.title); setBody(topic.body); setTaskId(topic.refId ?? ""); }}>
+    <ConcurrentDraft target={{ type: "topic", id: topic.id }} field="body" theirs={topic.title + "\n" + topic.body} value={JSON.stringify([topic.title, topic.body, topic.refId])} draft={JSON.stringify([title, body, taskId || null])} onUseTheirs={() => { setTitle(topic.title); setBody(topic.body); setTaskId(topic.refId ?? ""); }}>
     <form onSubmit={save} className="min-w-0 flex-1 space-y-2" onMouseDown={(e) => e.stopPropagation()}>
       <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Topic title" onKeyDown={(e) => e.key === "Escape" && onDone()} />
       <MarkdownInput aria-label="Topic body" maxLength={20_000} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Details" className="min-h-20" />

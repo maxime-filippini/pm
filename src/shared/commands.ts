@@ -71,7 +71,7 @@ export type Command = { [N in CommandName]: { name: N; args: CommandArgs<N> } }[
 export const COMMAND_NAMES = Object.keys(commandSchemas) as CommandName[];
 
 export function parseCommand(name: string, args: unknown): { ok: true; command: Command } | { ok: false; message: string } {
-  if (!(name in commandSchemas)) return { ok: false, message: `Unknown command: ${name}` };
+  if (!Object.hasOwn(commandSchemas, name)) return { ok: false, message: `Unknown command: ${name}` };
   const result = commandSchemas[name as CommandName].safeParse(args);
   if (!result.success) return { ok: false, message: result.error.issues.map((i) => i.message).join("; ") };
   return { ok: true, command: { name, args: result.data } as Command };

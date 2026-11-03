@@ -4,6 +4,13 @@ import { uuidv7 } from "../src/shared/ids";
 import { connect, freshWorkspaceId, newMember, workspaceStub } from "./helpers";
 
 describe("sync protocol", () => {
+  it("rejects inherited object property names as unknown commands", async () => {
+    const client = await connect(freshWorkspaceId(), newMember());
+    const result = await client.command("toString", {});
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.m.error.code).toBe("invalid");
+  });
+
   it("sends a snapshot with the connecting Member on connect", async () => {
     const wsId = freshWorkspaceId();
     const alice = newMember("Alice");

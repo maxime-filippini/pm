@@ -8,7 +8,9 @@ describe("attachment-only presence", () => {
     const viewing = { type: "task", id: "task-a" }, editing = { ref: viewing, field: "description" };
     a.ws.send(JSON.stringify({ type: "presence", viewing, editing }));
     await b.next("presence", (m) => m.members.some((p) => p.editing?.field === "description"));
-    a2.ws.send(JSON.stringify({ type: "presence", viewing, editing }));
+    a2.ws.send(JSON.stringify({ type: "presence", editing }));
+    await b.next("presence", (m) => m.members.length === 2 && m.members.some((p) => !p.viewing));
+    a2.ws.send(JSON.stringify({ type: "presence", viewing }));
     const deduped = await b.next("presence", (m) => m.members.some((p) => p.editing?.field === "description"));
     expect(deduped.members).toHaveLength(1);
     a2.ws.send(JSON.stringify({ type: "presence", viewing: { type: "feature", id: "feature-b" }, editing: null }));

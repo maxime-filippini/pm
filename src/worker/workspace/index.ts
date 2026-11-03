@@ -234,7 +234,7 @@ export class WorkspaceDO extends DurableObject<Env> {
       if (!attachment) continue;
       const active = one(this.sql, toMember, "SELECT * FROM members WHERE id = ?", attachment.memberId);
       if (!active?.active || (!attachment.viewing && !attachment.editing)) continue;
-      members.set(JSON.stringify(attachment), attachment);
+      members.set(JSON.stringify([attachment.memberId, attachment.viewing ?? null, attachment.editing ?? null]), attachment);
     }
     this.broadcast({ type: "presence", members: [...members.values()] });
   }
