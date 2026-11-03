@@ -1,6 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Fragment, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import type { TaskStatus } from "../../shared/entities";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -53,26 +52,6 @@ export function ShowClosedToggle({ checked, onChange }: { checked: boolean; onCh
       Show done and canceled
     </Label>
   );
-}
-
-const TASK_KEY = /\b([A-Z]{2,6})-(\d+)\b/g;
-
-/** Plain text that keeps line breaks and turns Task keys (WEB-12) into links. */
-export function LinkifiedText({ slug, text, className }: { slug: string; text: string; className?: string }) {
-  const parts: ReactNode[] = [];
-  let last = 0;
-  for (const match of text.matchAll(TASK_KEY)) {
-    const [whole, key, number] = match;
-    parts.push(text.slice(last, match.index));
-    parts.push(
-      <Link key={match.index} to="/w/$slug/p/$key/t/$number" params={{ slug, key: key!, number: number! }} className="font-mono text-[0.95em] underline underline-offset-2 hover:text-foreground">
-        {whole}
-      </Link>,
-    );
-    last = match.index + whole.length;
-  }
-  parts.push(text.slice(last));
-  return <p className={cn("whitespace-pre-wrap", className)}>{parts.map((p, i) => <Fragment key={i}>{p}</Fragment>)}</p>;
 }
 
 /** Toast after a soft delete, with an Undo button. */

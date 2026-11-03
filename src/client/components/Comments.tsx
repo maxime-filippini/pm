@@ -7,7 +7,7 @@ import { useWorkspace, workspaceActions } from "../store/workspace";
 import { useSocket } from "../sync/context";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Textarea } from "./ui/textarea";
+import { Markdown, MarkdownInput } from "./Markdown";
 
 const EMPTY: Comment[] = [];
 export function Comments({ target }: { target: CommentTarget }) {
@@ -58,7 +58,7 @@ export function Comments({ target }: { target: CommentTarget }) {
       e.preventDefault();
       if (socket.send("comment.create", { id: uuidv7(), target, body })) setBody("");
     }}>
-      <Textarea aria-label="New Comment" placeholder="Add a Comment…" maxLength={20_000} value={body} onChange={(e) => setBody(e.target.value)} />
+      <MarkdownInput aria-label="New Comment" placeholder="Add a Comment…" maxLength={20_000} value={body} onChange={(e) => setBody(e.target.value)} />
       <Button disabled={!body.trim()}>Post Comment</Button>
     </form>
   </Card>;
@@ -73,9 +73,9 @@ function CommentRow({ comment, author, own }: { comment: Comment; author: string
       e.preventDefault();
       if (socket.send("comment.edit", { id: comment.id, body: draft })) setEditing(false);
     }}>
-      <Textarea aria-label="Edit Comment" maxLength={20_000} value={draft} onChange={(e) => setDraft(e.target.value)} />
+      <MarkdownInput aria-label="Edit Comment" maxLength={20_000} value={draft} onChange={(e) => setDraft(e.target.value)} />
       <div className="flex gap-2"><Button size="sm" disabled={!draft.trim()}>Save</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button></div>
-    </form> : <p className="whitespace-pre-wrap break-words text-sm">{comment.body}</p>}
+    </form> : <Markdown text={comment.body} />}
     {own && !editing && <div className="flex gap-2">
       <Button variant="ghost" size="sm" onClick={() => { setDraft(comment.body); setEditing(true); }}>Edit</Button>
       <Button variant="ghost" size="sm" onClick={() => socket.send("comment.delete", { id: comment.id })}>Delete</Button>

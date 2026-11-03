@@ -1,3 +1,4 @@
+import { Markdown, MarkdownInput } from "@/components/Markdown";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   CheckCircle2Icon,
@@ -16,7 +17,7 @@ import { useMemo, useState } from "react";
 import { type Meeting, type Project, type Task, type TaskStatus, type Topic, TASK_STATUSES, taskKey } from "../../shared/entities";
 import { uuidv7 } from "../../shared/ids";
 import { byRank } from "../../shared/rank";
-import { deletedToast, Empty, LinkifiedText, MemberAvatar, SectionHeading, STATUS_LABEL, StatusDot } from "@/components/common";
+import { deletedToast, Empty, MemberAvatar, SectionHeading, STATUS_LABEL, StatusDot } from "@/components/common";
 import { SortableList, type SortableRowProps } from "@/components/SortableList";
 import {
   AlertDialog,
@@ -34,7 +35,6 @@ import { Card } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
@@ -127,7 +127,7 @@ function TopicCard({ slug, project, topic, row }: { slug: string; project: Proje
       ) : (
         <div className="min-w-0 flex-1 space-y-1">
           <p className="font-medium">{topic.title}</p>
-          {topic.body && <p className="line-clamp-3 whitespace-pre-wrap text-muted-foreground">{topic.body}</p>}
+          {topic.body && <Markdown text={topic.body} />}
           <TaskRef slug={slug} project={project} topic={topic} />
         </div>
       )}
@@ -226,7 +226,7 @@ function AddTopicForm({ project }: { project: Project }) {
       </div>
       {more && (
         <div className="space-y-2">
-          <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Context, links, what you want to decide…" className="min-h-20" />
+          <MarkdownInput value={body} onChange={(e) => setBody(e.target.value)} placeholder="Context, links, what you want to decide…" className="min-h-20" />
           <TaskPicker project={project} value={taskId} onChange={setTaskId} />
         </div>
       )}
@@ -248,7 +248,7 @@ function TopicEditor({ project, topic, onDone }: { project: Project; topic: Topi
   return (
     <form onSubmit={save} className="min-w-0 flex-1 space-y-2" onMouseDown={(e) => e.stopPropagation()}>
       <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Topic title" onKeyDown={(e) => e.key === "Escape" && onDone()} />
-      <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Details" className="min-h-20" />
+      <MarkdownInput value={body} onChange={(e) => setBody(e.target.value)} placeholder="Details" className="min-h-20" />
       <TaskPicker project={project} value={taskId} onChange={setTaskId} />
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onDone}>Cancel</Button>
@@ -421,7 +421,7 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
               <span className="mr-1.5 text-muted-foreground">{index}.</span>
               {topic.title}
             </p>
-            {topic.body && <p className="whitespace-pre-wrap text-muted-foreground">{topic.body}</p>}
+            {topic.body && <Markdown text={topic.body} />}
             {topic.refId && <RefTaskControls slug={slug} project={project} taskId={topic.refId} />}
           </div>
           {author && <MemberAvatar name={author.name} />}
@@ -430,7 +430,7 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
         {resolved && !editingOutcome ? (
           <div className="ml-8 space-y-2">
             <div className="rounded-md bg-muted/60 px-3 py-2">
-              <LinkifiedText slug={slug} text={topic.outcome ?? ""} />
+              <Markdown text={topic.outcome ?? ""} />
             </div>
             <div className="flex flex-wrap gap-1">
               <Button variant="ghost" size="sm" onClick={() => setEditingOutcome(true)}><PencilIcon /> Edit</Button>
@@ -473,7 +473,7 @@ function OutcomeEditor({ initial, onSave, onCancel, onCreateTask }: {
         if (text.trim()) onSave(text);
       }}
     >
-      <Textarea
+      <MarkdownInput
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Outcome: what did you decide?"
@@ -637,9 +637,9 @@ export function PastMeetingPage() {
             <li key={t.id}>
               <Card className="gap-2 px-4">
                 <p className="font-medium">{t.title}</p>
-                {t.body && <p className="whitespace-pre-wrap text-muted-foreground">{t.body}</p>}
+                {t.body && <Markdown text={t.body} />}
                 <div className="rounded-md bg-muted/60 px-3 py-2">
-                  <LinkifiedText slug={slug} text={t.outcome ?? ""} />
+                  <Markdown text={t.outcome ?? ""} />
                 </div>
               </Card>
             </li>
@@ -660,7 +660,7 @@ function CreateFeatureForm({ topic, onDone }: { topic: Topic; onDone: () => void
   }}>
     <p className="text-sm font-semibold">Propose a Feature</p>
     <Input autoFocus aria-label="Feature title" value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} />
-    <Textarea aria-label="Feature description" value={description} onChange={(e) => setDescription(e.target.value)} />
+    <MarkdownInput aria-label="Feature description" value={description} onChange={(e) => setDescription(e.target.value)} />
     <div className="flex flex-wrap gap-2"><Button disabled={!title.trim()} size="sm">Create Feature</Button><Button type="button" variant="ghost" size="sm" onClick={onDone}>Cancel</Button></div>
   </form>;
 }
