@@ -1,3 +1,4 @@
+import { handleMcp } from "./mcp";
 import { Hono } from "hono";
 import { z } from "zod";
 import { uuidv7 } from "../shared/ids";
@@ -53,6 +54,15 @@ app.get("/w/:slug/export", async (c) => {
   c.header("Cache-Control", "no-store");
   c.header("Content-Disposition", `attachment; filename="pm-${workspace.slug}-${new Date(data.exportedAt).toISOString().slice(0, 10)}.json"`);
   return c.json({ ...data, workspace: { id: workspace.id, slug: workspace.slug, name: workspace.name } });
+});
+
+// Each MCP request resolves identity and registry membership anew, including tools/list.
+app.all("/w/:slug/mcp", async (c) => {
+  const member = c.get("member");
+  if (!member) return c.json({ error: "Not invited" }, 403);
+  const workspace = await workspaceForMember(c.env.DB, c.req.param("slug"), member.id);
+  if (!workspace) return c.json({ error: "Not a member of this Workspace" }, 403);
+  return handleMcp(c.req.raw, c.env.WORKSPACE.getByName(workspace.id), member);
 });
 
 // ---- Workspace socket ----

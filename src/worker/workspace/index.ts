@@ -171,24 +171,49 @@ export class WorkspaceDO extends DurableObject<Env> {
     this.send(ws, result.ok ? { type: "ack", id } : { type: "reject", id, error: result.error });
   }
 
-  private handleQuery(ws: WebSocket, id: string, name: string, args: unknown) {
-    if (!Object.hasOwn(querySchemas, name)) {
-      return this.send(ws, { type: "result_error", id, error: { code: "invalid", message: `Unknown query: ${name}` } });
+  /** Shared reads for authenticated sockets and the Worker's MCP adapter. */
+  private readQuery(actorId: string, name: string, args: unknown):
+    | { ok: true; data: unknown }
+    | { ok: false; error: { code: CommandError["code"]; message: string } } {
+    if (!one(this.sql, toMember, "SELECT * FROM members WHERE id = ?", actorId)?.active) {
+      return { ok: false, error: { code: "forbidden", message: "Not an active Member" } };
+    }
+    if (name !== "workspace.snapshot" && !Object.hasOwn(querySchemas, name)) {
+      return { ok: false, error: { code: "invalid", message: `Unknown query: ${name}` } };
     }
     try {
       let data: unknown;
-      switch (name as QueryName) {
+      switch (name as QueryName | "workspace.snapshot") {
+        case "workspace.snapshot": data = { version: this.version(), memberId: actorId, data: snapshot(this.sql) }; break;
         case "search": data = search(this.sql, querySchemas.search.parse(args ?? {})); break;
         case "activity.list": data = activityList(this.sql, querySchemas["activity.list"].parse(args ?? {})); break;
         case "comments.list": data = commentsList(this.sql, querySchemas["comments.list"].parse(args ?? {})); break;
       }
-      this.send(ws, { type: "result", id, data });
+      return { ok: true, data };
     } catch (error) {
-      this.send(ws, { type: "result_error", id, error: {
+      return { ok: false, error: {
         code: error instanceof CommandError ? error.code : error instanceof ZodError ? "invalid" : "internal",
         message: error instanceof CommandError || error instanceof ZodError ? error.message : "Could not load collection",
-      } });
+      } };
     }
+  }
+
+  // JSON is the existing wire format. It also keeps open-ended Activity payloads
+  // explicit at the RPC boundary rather than pretending unknown data is Rpc.Serializable.
+  query(actorId: string, name: string, args: unknown) {
+    const response = this.readQuery(actorId, name, args);
+    return response.ok ? { ok: true as const, json: JSON.stringify(response.data) } : response;
+  }
+
+  async command(actorId: string, via: string, name: string, args: unknown) {
+    const response = await this.execute(actorId, via, name, args);
+    return { ok: response.ok, json: JSON.stringify(response.ok ? response : response.error) };
+  }
+
+  private handleQuery(ws: WebSocket, id: string, name: string, args: unknown) {
+    const memberId = (ws.deserializeAttachment() as SocketAttachment).memberId;
+    const result = this.readQuery(memberId, name, args);
+    this.send(ws, result.ok ? { type: "result", id, data: result.data } : { type: "result_error", id, error: result.error });
   }
 
   exportData() { return exportWorkspace(this.sql); }

@@ -134,4 +134,4 @@ For behavior changes, run the relevant runtime tests and the repo's typecheck, t
 
 Every non-`master` push triggers the **shared** preview deployment; the latest branch wins, including documentation branches. Production deploys only from `master`; inspect the deployment job before claiming a change is live. Follow [`ADR 0005`](./adr/0005-one-shared-preview-environment.md).
 
-M5 (agent MCP server and OAuth) remains after v1. Board views, notifications, offline mode, CRDT editing, full-text search, and GitHub webhooks remain outside this v1 scope.
+M5 now has a first MCP endpoint implementation stacked on #22: [`mcp.md`](./mcp.md) records its protocol, permissions, client attribution and rollout. Managed OAuth configuration and a real Claude connector acceptance test remain; M5 is not complete. Board views, notifications, offline mode, CRDT editing, full-text search, and GitHub webhooks remain outside this v1 scope.
