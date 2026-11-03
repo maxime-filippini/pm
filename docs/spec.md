@@ -249,17 +249,17 @@ See [ADR 0004](./adr/0004-pull-request-links-are-manual-and-polled.md).
 
 ## 8. Views
 
-All views are responsive and work on a phone first. Use open sections, spacing and vertical separators instead of surrounding each zone with a box. On desktop the Tasks view separates task creation from the current-task view with a vertical split; on phones those zones stack. Filters and results belong to the same current-task section.
+All views are responsive and work on a phone first. Use open sections, spacing and vertical separators instead of surrounding each zone with a box. On desktop the Tasks view separates task creation from the current-task view with a vertical split; on phones those zones stack. Filters and results belong to the same current-task section. Page headings name the view (Tasks, My Tasks, Features); Project context belongs in navigation rather than being repeated in each heading.
 
 - **Workspace home**: list of Projects, each with its open Task count, Topics to discuss, and whether a Meeting is in progress.
 - **Project / Tasks**: list grouped by status, sortable by hand (drag on desktop, "move up/down" on mobile), with filters for status, assignee and Feature. Each Task row offers soft deletion with Undo.
-- **Project navigation**: the Project switcher and Tasks / My Tasks / Features / Meetings tabs keep Members inside the selected Project. Switching Projects preserves the current tab. A visible Workspace button returns to the Workspace’s Project list; the PM logo returns to the main page. The Project switcher also offers Back to Workspace. Task detail links include the Project key.
-- **My Tasks**: the Project tab shows Tasks assigned to me in that Project, excluding `done` and `canceled` by default. A separate Workspace-wide view remains available at `/w/:slug/me` and from Workspace navigation; it groups Tasks by active Project.
+- **Navigation**: at widths of 1024 px and above, a full-height sidebar separates Workspace destinations from the selected Project’s switcher and Tasks / My Tasks / Features / Meetings / Settings links. Narrower screens use a compact sticky header with Project context, search and a menu button opening a modal navigation drawer. The drawer supports keyboard focus, Escape and close controls, closes after navigation, and dismisses when resizing to desktop. Switching Projects preserves the current section. Back to Workspace returns to the Project list; the PM logo returns to the main page. Task detail links include the Project key.
+- **My Tasks**: the Project view shows Tasks assigned to me in that Project, excluding `done` and `canceled` by default. A separate Workspace-wide view remains available at `/w/:slug/me` and from Workspace navigation; it groups Tasks by active Project.
 - **Features**: per Project, `proposed` first, then `accepted` with Task progress (n/m done), then `done` and `rejected` collapsed.
 - **Feature detail**: description, status controls (with who decided and when), Tasks, Comments, Activity.
 - **Task detail**: key, title, description, status, assignee, Feature, Pull Request links with state badges, Comments, Activity.
-- **Topics / Meeting** (a Project tab): an unresolved Topic list you can reorder, with "Start Meeting". During a Meeting: attendee toggles, each Topic with an Outcome box, its related Task's status and assignee, a quick "create Task" (title + assignee, noted in the Outcome), and "Close Meeting". "Create Feature" proposes a Feature using the Topic details and records it in the Outcome.
-- **Past Meetings** (under the Project's Meetings tab): date, attendees, Topics and their Outcomes.
+- **Topics / Meeting** (a Project section): an unresolved Topic list you can reorder, with "Start Meeting". During a Meeting: attendee toggles, each Topic with an Outcome box, its related Task's status and assignee, a quick "create Task" (title + assignee, noted in the Outcome), and "Close Meeting". "Create Feature" proposes a Feature using the Topic details and records it in the Outcome.
+- **Past Meetings** (under the Project's Meetings section): date, attendees, Topics and their Outcomes.
 - **Activity**: a feed for the whole Workspace, paged with `activity.list`.
 - **⌘K quick-jump**: jump to a Task by key, or search Tasks, Features and Topics by title with SQL `LIKE`. On mobile, a search button opens the same dialog.
 - **Project settings**: rename, archive, GitHub token (write-only field).

@@ -95,7 +95,7 @@ function ProjectNavigation({ slug, projectKey, onNavigate }: { slug: string; pro
   const onFeatures = Boolean(matchRoute({ to: "/w/$slug/p/$key/features", params, fuzzy: true }));
   const onMeetings = Boolean(matchRoute({ to: "/w/$slug/p/$key/meetings", params, fuzzy: true }));
   const onSettings = Boolean(matchRoute({ to: "/w/$slug/p/$key/settings", params }));
-  const onTasks = Boolean(matchRoute({ to: "/w/$slug/p/$key", params })) || Boolean(number);
+  const onTasks = !onMyTasks && !onFeatures && !onMeetings && !onSettings && (Boolean(matchRoute({ to: "/w/$slug/p/$key", params })) || Boolean(number));
   const meetingOpen = useWorkspace((s) => {
     const project = Object.values(s.view.projects).find((p) => p.key === projectKey);
     return Boolean(project && Object.values(s.view.meetings).some((m) => m.projectId === project.id && m.endedAt === null));
@@ -104,7 +104,7 @@ function ProjectNavigation({ slug, projectKey, onNavigate }: { slug: string; pro
     <p className={groupLabel}>Project</p>
     <ProjectSwitcher slug={slug} projectKey={projectKey} tab={onSettings ? "settings" : onMyTasks ? "me" : onFeatures ? "features" : onMeetings ? "meetings" : "tasks"} onNavigate={onNavigate} />
     <div className="space-y-1 pt-2">
-      <Link to="/w/$slug/p/$key" params={params} className={cn(item, onTasks && activeItem)} aria-current={onTasks ? "page" : undefined}><ListTodoIcon className="size-4" /> Tasks</Link>
+      <Link to="/w/$slug/p/$key" params={params} activeOptions={{ exact: true }} className={cn(item, onTasks && activeItem)} aria-current={onTasks ? "page" : undefined}><ListTodoIcon className="size-4" /> Tasks</Link>
       <Link to="/w/$slug/p/$key/me" params={params} className={cn(item, onMyTasks && activeItem)} aria-current={onMyTasks ? "page" : undefined}><CheckSquareIcon className="size-4" /> My Tasks</Link>
       <Link to="/w/$slug/p/$key/features" params={params} className={cn(item, onFeatures && activeItem)} aria-current={onFeatures ? "page" : undefined}><LightbulbIcon className="size-4" /> Features</Link>
       <Link to="/w/$slug/p/$key/meetings" params={params} className={cn(item, onMeetings && activeItem)} aria-current={onMeetings ? "page" : undefined}><UsersIcon className="size-4" /> Meetings{meetingOpen && <span className="ml-auto size-1.5 rounded-full bg-emerald-400" title="Meeting in progress" />}</Link>

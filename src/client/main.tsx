@@ -17,7 +17,7 @@ function AppFrame() {
   </div>;
 }
 
-/** Workspace pages carry their own top bar. */
+/** Workspace pages carry their own responsive navigation shell. */
 function AppHeader() {
   const { slug } = useParams({ strict: false });
   if (slug) return null;
