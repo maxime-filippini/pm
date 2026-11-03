@@ -98,5 +98,7 @@ Topics and Meetings are per Project (a "Meetings" tab next to Tasks / My Tasks).
 - [x] Project settings view (rename, archive, token with guidance)
 - [x] Tests: state mapping, error mapping with mocked `fetch`
 
-## M5: Agents (designed, built after v1)
-- [ ] MCP server over the command set, Access Managed OAuth (fallback `workers-oauth-provider`), `via` attribution
+## M5: Agents
+- [x] Single account-level stateless MCP connection with Workspace discovery, explicit per-call Workspace selection, shared commands/queries, current membership checks and configured client `via` attribution (see `mcp.md`)
+- [ ] Enable Access Managed OAuth and verify the real Claude connector end to end; use `workers-oauth-provider` only if that test establishes incompatibility
+- [ ] Verify production OAuth rollout after preview acceptance

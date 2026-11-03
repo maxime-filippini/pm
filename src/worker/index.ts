@@ -1,3 +1,4 @@
+import { handleMcp } from "./mcp";
 import { Hono } from "hono";
 import { z } from "zod";
 import { uuidv7 } from "../shared/ids";
@@ -53,6 +54,13 @@ app.get("/w/:slug/export", async (c) => {
   c.header("Cache-Control", "no-store");
   c.header("Content-Disposition", `attachment; filename="pm-${workspace.slug}-${new Date(data.exportedAt).toISOString().slice(0, 10)}.json"`);
   return c.json({ ...data, workspace: { id: workspace.id, slug: workspace.slug, name: workspace.name } });
+});
+
+// Account-level MCP connection; each Workspace tool checks registry membership.
+app.all("/mcp", async (c) => {
+  const member = c.get("member");
+  if (!member) return c.json({ error: "Not invited" }, 403);
+  return handleMcp(c.req.raw, c.env, member);
 });
 
 // ---- Workspace socket ----
