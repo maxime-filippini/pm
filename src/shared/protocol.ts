@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { Activity, ActivityItem, Comment, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
-import { Id, CommentTarget, ActivityTarget } from "./entities";
+import type { Activity, Presence, ActivityItem, Comment, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
+import { Id, Ref, CommentTarget, ActivityTarget } from "./entities";
 
 // ---- Client → server ----
 
@@ -9,8 +9,8 @@ export const ClientMessage = z.discriminatedUnion("type", [
   z.object({ type: z.literal("query"), id: Id, name: z.string(), args: z.unknown() }),
   z.object({
     type: z.literal("presence"),
-    viewing: z.object({ type: z.string(), id: Id }).nullish(),
-    editing: z.object({ ref: z.object({ type: z.string(), id: Id }), field: z.string() }).nullish(),
+    viewing: Ref.nullish(),
+    editing: z.object({ ref: Ref, field: z.string().min(1).max(100) }).nullish(),
   }),
 ]);
 export type ClientMessage = z.infer<typeof ClientMessage>;
@@ -40,6 +40,7 @@ export type Snapshot = {
 export type ErrorCode = "invalid" | "not_found" | "conflict" | "forbidden" | "internal";
 
 export type ServerMessage =
+  | { type: "presence"; members: Presence[] }
   | { type: "snapshot"; version: number; memberId: string; data: Snapshot }
   | { type: "change"; version: number; cause?: string; changes: Change[] }
   | { type: "ack"; id: string }

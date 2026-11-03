@@ -81,6 +81,10 @@ export type Meeting = {
   attendeeIds: string[];
 };
 
+export const Ref = z.object({ type: z.enum(["project", "task", "feature", "topic", "meeting"]), id: Id });
+export type Ref = z.infer<typeof Ref>;
+export type Presence = { memberId: string; viewing?: Ref | null; editing?: { ref: Ref; field: string } | null };
+
 export const CommentTarget = z.object({ type: z.enum(["task", "feature"]), id: Id });
 export type CommentTarget = z.infer<typeof CommentTarget>;
 export type Comment = {

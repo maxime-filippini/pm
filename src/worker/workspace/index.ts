@@ -1,7 +1,7 @@
 import { ZodError } from "zod";
 import { DurableObject } from "cloudflare:workers";
 import { parseCommand } from "../../shared/commands";
-import type { Change } from "../../shared/entities";
+import type { Change, Presence } from "../../shared/entities";
 import { ClientMessage, querySchemas, type QueryName, type ServerMessage } from "../../shared/protocol";
 import { apply } from "./commands";
 import { CommandContext, CommandError } from "./context";
@@ -16,7 +16,7 @@ export const MEMBER_HEADERS = {
   name: "X-PM-Member-Name",
 } as const;
 
-export type SocketAttachment = { memberId: string };
+export type SocketAttachment = Presence;
 
 /**
  * All data for one Workspace (ADR 0001), synced over hibernatable WebSockets (ADR 0002).
@@ -55,6 +55,7 @@ export class WorkspaceDO extends DurableObject<Env> {
     this.ctx.acceptWebSocket(server, [memberId]);
     server.serializeAttachment({ memberId } satisfies SocketAttachment);
     this.send(server, { type: "snapshot", version: this.version(), memberId, data: snapshot(this.sql) });
+    this.broadcastPresence();
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -77,11 +78,14 @@ export class WorkspaceDO extends DurableObject<Env> {
       case "query":
         return this.handleQuery(ws, parsed.id, parsed.name, parsed.args);
       case "presence":
-        return; // milestone 2
+        ws.serializeAttachment({ ...attachment, ...(parsed.viewing !== undefined && { viewing: parsed.viewing }), ...(parsed.editing !== undefined && { editing: parsed.editing }) } satisfies SocketAttachment);
+        return this.broadcastPresence();
     }
   }
 
   async webSocketClose(ws: WebSocket, code: number): Promise<void> {
+    ws.serializeAttachment({ memberId: (ws.deserializeAttachment() as SocketAttachment)?.memberId });
+    this.broadcastPresence(ws);
     try {
       ws.close(code, "closing");
     } catch {
@@ -89,7 +93,10 @@ export class WorkspaceDO extends DurableObject<Env> {
     }
   }
 
-  async webSocketError(): Promise<void> {}
+  async webSocketError(ws: WebSocket): Promise<void> {
+    ws.serializeAttachment({ memberId: (ws.deserializeAttachment() as SocketAttachment)?.memberId });
+    this.broadcastPresence(ws);
+  }
 
   // ---- Commands ----
 
@@ -161,6 +168,7 @@ export class WorkspaceDO extends DurableObject<Env> {
     this.bumpVersion();
     for (const ws of this.ctx.getWebSockets(memberId)) ws.close(4003, "Removed from Workspace");
     this.broadcast({ type: "change", version: this.version(), changes: [{ entity: "member", op: "upsert", row: { ...member, active: false } }] });
+    this.broadcastPresence();
   }
 
   private ensureMember(member: { id: string; email: string; name: string }): void {
@@ -178,6 +186,19 @@ export class WorkspaceDO extends DurableObject<Env> {
   }
 
   // ---- Helpers ----
+
+  private broadcastPresence(exclude?: WebSocket): void {
+    const members = new Map<string, Presence>();
+    for (const socket of this.ctx.getWebSockets()) {
+      if (socket === exclude || socket.readyState !== WebSocket.OPEN) continue;
+      const attachment = socket.deserializeAttachment() as SocketAttachment | null;
+      if (!attachment) continue;
+      const active = one(this.sql, toMember, "SELECT * FROM members WHERE id = ?", attachment.memberId);
+      if (!active?.active || (!attachment.viewing && !attachment.editing)) continue;
+      members.set(JSON.stringify(attachment), attachment);
+    }
+    this.broadcast({ type: "presence", members: [...members.values()] });
+  }
 
   private version(): number {
     const row = this.sql.exec<{ value: string }>("SELECT value FROM meta WHERE key = 'version'").toArray()[0];

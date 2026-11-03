@@ -1,3 +1,4 @@
+import { ConcurrentDraft } from "./ConcurrentDraft";
 import { useEffect, useState } from "react";
 import type { Comment, CommentTarget } from "../../shared/entities";
 import type { CommentsPage } from "../../shared/protocol";
@@ -69,13 +70,13 @@ function CommentRow({ comment, author, own }: { comment: Comment; author: string
   const [draft, setDraft] = useState(comment.body);
   return <article className="space-y-2 border-b pb-3">
     <p className="text-xs text-muted-foreground">{author}{comment.via && ` via ${comment.via}`} · {new Date(comment.createdAt).toLocaleString()}{comment.editedAt !== null && ` · Edited ${new Date(comment.editedAt).toLocaleString()}`}</p>
-    {editing ? <form className="space-y-2" onSubmit={(e) => {
+    {editing ? <ConcurrentDraft value={comment.body} draft={draft} field={"comment:" + comment.id} onUseTheirs={() => setDraft(comment.body)}><form className="space-y-2" onSubmit={(e) => {
       e.preventDefault();
       if (socket.send("comment.edit", { id: comment.id, body: draft })) setEditing(false);
     }}>
       <MarkdownInput aria-label="Edit Comment" maxLength={20_000} value={draft} onChange={(e) => setDraft(e.target.value)} />
       <div className="flex gap-2"><Button size="sm" disabled={!draft.trim()}>Save</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button></div>
-    </form> : <Markdown text={comment.body} />}
+    </form></ConcurrentDraft> : <Markdown text={comment.body} />}
     {own && !editing && <div className="flex gap-2">
       <Button variant="ghost" size="sm" onClick={() => { setDraft(comment.body); setEditing(true); }}>Edit</Button>
       <Button variant="ghost" size="sm" onClick={() => socket.send("comment.delete", { id: comment.id })}>Delete</Button>
