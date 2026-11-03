@@ -94,6 +94,10 @@ export type Comment = {
   editedAt: number | null;
 };
 
+export const ActivityTarget = z.object({ type: z.enum(["project", "feature", "task", "topic", "meeting"]), id: Id });
+export type ActivityTarget = z.infer<typeof ActivityTarget>;
+export type ActivityItem = Activity & { canRestore?: boolean };
+
 export type Activity = {
   id: string;
   at: number;

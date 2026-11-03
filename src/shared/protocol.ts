@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { Activity, Comment, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
-import { Id, CommentTarget } from "./entities";
+import type { Activity, ActivityItem, Comment, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
+import { Id, CommentTarget, ActivityTarget } from "./entities";
 
 // ---- Client → server ----
 
@@ -17,7 +17,11 @@ export type ClientMessage = z.infer<typeof ClientMessage>;
 
 export const querySchemas = {
   "comments.list": z.object({ target: CommentTarget, cursor: z.object({ createdAt: z.number().int(), id: Id }).optional(), limit: z.number().int().min(1).max(200).default(50) }),
-  "activity.list": z.object({ before: z.number().int().optional(), limit: z.number().int().min(1).max(200).default(50) }),
+  "activity.list": z.object({
+    target: ActivityTarget.optional(), before: z.number().int().optional(),
+    cursor: z.object({ at: z.number().int(), id: Id }).optional(),
+    limit: z.number().int().min(1).max(200).default(50),
+  }).refine((a) => a.before === undefined || a.cursor === undefined, "Use either before or cursor"),
 } as const;
 export type QueryName = keyof typeof querySchemas;
 
@@ -43,6 +47,6 @@ export type ServerMessage =
   | { type: "result"; id: string; data: unknown }
   | { type: "result_error"; id: string; error: { code: ErrorCode; message: string } };
 
-export type ActivityPage = { items: Activity[] };
+export type ActivityPage = { items: ActivityItem[]; nextCursor: { at: number; id: string } | null };
 
 export type CommentsPage = { items: Comment[]; nextCursor: { createdAt: number; id: string } | null };

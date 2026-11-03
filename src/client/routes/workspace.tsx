@@ -24,6 +24,7 @@ export function WorkspaceLayout() {
         <Link to="/" className="mr-1 shrink-0 px-1 font-heading font-semibold" title="All Workspaces">PM</Link>
         {key ? <ProjectNav slug={slug} projectKey={key} /> : <WorkspaceNav slug={slug} />}
         <span className="flex-1" />
+        <Link to="/w/$slug/activity" params={{ slug }} className={tab} activeProps={{ className: activeTab }}>Activity</Link>
         <ConnectionBadge />
       </nav>
       <Gate>

@@ -1,3 +1,4 @@
+import { ActivityPage } from "./routes/activity";
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider, useParams } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -37,6 +38,7 @@ function AppHeader() {
 const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: HomePage });
 const adminRoute = createRoute({ getParentRoute: () => rootRoute, path: "/admin", component: AdminPage });
 const workspaceRoute = createRoute({ getParentRoute: () => rootRoute, path: "/w/$slug", component: WorkspaceLayout });
+const activityRoute = createRoute({ getParentRoute: () => workspaceRoute, path: "/activity", component: ActivityPage });
 const projectsRoute = createRoute({ getParentRoute: () => workspaceRoute, path: "/", component: ProjectsPage });
 const projectRoute = createRoute({ getParentRoute: () => workspaceRoute, path: "/p/$key", component: ProjectLayout });
 const projectTasksRoute = createRoute({ getParentRoute: () => projectRoute, path: "/", component: ProjectTasksPage });
@@ -55,6 +57,7 @@ const routeTree = rootRoute.addChildren([
   adminRoute,
   workspaceRoute.addChildren([
     projectsRoute,
+    activityRoute,
     projectRoute.addChildren([projectTasksRoute, projectMyTasksRoute, taskRoute, featuresRoute, featureRoute, meetingsRoute, pastMeetingRoute]),
     taskKeyRoute,
     myTasksRoute,
