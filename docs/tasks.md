@@ -9,7 +9,7 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [x] Custom domain `pm.maximefilippini.me`; `workers_dev` and preview URLs off
 - [x] First manual deploy; Access in front of the hostname
 - [x] GitHub Actions: typecheck + test on every push/PR, deploy on push to `master` (D1 migrations, then `wrangler deploy`)
-- [ ] `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repo secrets set (user)
+- [ ] `CLOUDFLARE_API_TOKEN` repo secret set (account id is in `wrangler.jsonc`)
 
 ## M1: Foundation
 
