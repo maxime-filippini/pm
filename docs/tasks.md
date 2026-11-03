@@ -9,7 +9,7 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [x] Custom domain `pm.maximefilippini.me`; `workers_dev` and preview URLs off
 - [x] First manual deploy; Access in front of the hostname
 - [x] GitHub Actions: typecheck + test on every push/PR, deploy on push to `master` (D1 migrations, then `wrangler deploy`)
-- [ ] `CLOUDFLARE_API_TOKEN` repo secret set (account id is in `wrangler.jsonc`)
+- [x] `CLOUDFLARE_API_TOKEN` repo secret set (needs **D1 → Edit** on top of the Workers template)
 
 ## M1: Foundation
 
@@ -18,38 +18,40 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [x] `DEV_ACCESS_EMAIL` dev identity; fail closed (500) when set together with `ACCESS_AUD`
 - [x] Resolve email → Member in D1; 403 when not invited
 - [x] Membership check for `/api/w/:slug/*`; forward to DO with internal Member header
-- [ ] Tests: missing/invalid JWT → 401, non-member → 403, dev+aud → 500
+- [x] Tests: missing/invalid JWT → 401, non-member → 403, dev+aud → 500
 
 ### Registry and admin (§3.5, §6 admin)
 - [x] D1 migration: `workspaces`, `members`, `workspace_members`
 - [x] `GET /api/me` (Member + their Workspaces + `isAdmin`)
-- [ ] `/api/admin`: `workspace.create`, `member.add`, `member.remove`, `member.rename` (ADMIN_EMAILS only)
-- [ ] DO RPC to sync the `members` mirror; removing a Member marks inactive and closes their sockets
-- [ ] Admin page (Workspaces, Members)
-- [ ] Bootstrap: admin can create the first Workspace and add themselves
+- [x] `/api/admin`: `workspace.create`, `member.add`, `member.remove`, `member.rename` (ADMIN_EMAILS only)
+- [x] DO RPC to sync the `members` mirror; removing a Member marks inactive and closes their sockets
+- [x] Admin page (Workspaces, Members)
+- [x] Bootstrap: admin can create the first Workspace and add themselves
 
 ### Workspace DO and sync (§5, ADR 0002)
-- [x] Numbered SQL migrations in the constructor (`meta.schema_version`)
-- [ ] Hibernatable sockets: `ctx.acceptWebSocket`, attachment `{memberId, viewing, editing}`, ping/pong auto-response
-- [ ] `snapshot` on connect; `cmd` → validate → apply (sync, no await) → Activity → bump `version` → broadcast `change` + `ack`/`reject`
-- [ ] `query` messages (`activity.list` first)
-- [ ] zod schemas in `src/shared/` for entities, commands, changes, protocol
-- [ ] Tests: snapshot on connect, cross-client change, reject, idempotent create, rebuild from storage + attachments (`evictDurableObject`), `ctx.getWebSockets()`
-- [ ] Lint rule: no `setTimeout`/`setInterval` in `src/worker/workspace/`
+- [x] Numbered SQL migrations in the constructor (`_schema.version`)
+- [x] Hibernatable sockets: `ctx.acceptWebSocket`, attachment `{memberId}`, ping/pong auto-response (viewing/editing land with presence in M2)
+- [x] `snapshot` on connect; `cmd` → validate → apply (sync, no await) → Activity → bump `version` → broadcast `change` + `ack`/`reject`
+- [x] `query` messages (`activity.list` first)
+- [x] zod schemas in `src/shared/` for entities, commands, changes, protocol
+- [x] Tests: snapshot on connect, cross-client change, reject, idempotent create, rebuild from storage + attachments (`evictDurableObject`), `ctx.getWebSockets()`
+- [x] No `setTimeout`/`setInterval` in `src/worker/workspace/` (enforced by a test, not a linter)
 
 ### Projects and Tasks (§4, §6)
-- [ ] Commands: `project.create/rename/archive/unarchive`
-- [ ] Commands: `task.create/update/setStatus/move` (Task key numbering, `completed_at`, fractional rank)
-- [ ] Command tests per entity, including Activity written
+- [x] Commands: `project.create/rename/archive/unarchive`
+- [x] Commands: `task.create/update/setStatus/move` (Task key numbering, `completed_at`, fractional rank)
+- [x] Command tests per entity, including Activity written
 
 ### Client
-- [ ] Router (TanStack), Zustand store fed by socket, Tailwind + shadcn/ui
-- [ ] Sync layer: socket with backoff, ping every 30 s, pending queue, optimistic apply, rollback + toast on reject, replay after reconnect
-- [ ] Views: Workspace home (Project list), Project / Tasks (grouped by status, filters, reorder), Task detail (basic), My Tasks
-- [ ] Mobile-first layout
+- [x] Router (TanStack), Zustand store fed by socket, Tailwind
+- [ ] shadcn/ui (plain Tailwind components for now)
+- [x] Sync layer: socket with backoff, ping every 30 s, pending queue, optimistic apply, rollback + toast on reject, replay after reconnect
+- [x] Views: Workspace home (Project list), Project / Tasks (grouped by status, assignee filter, move up/down), Task detail (basic), My Tasks
+- [ ] Drag to reorder on desktop
+- [ ] Mobile-first layout (responsive basics only; needs a pass on a phone)
 
 ### Done when
-- [ ] Two browsers see each other's Task edits live
+- [x] Two browsers see each other's Task edits live (verified locally)
 - [ ] DO duration near zero while tabs sit idle (check dashboard metrics)
 
 ## M2: Planning
