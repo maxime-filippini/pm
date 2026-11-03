@@ -1,7 +1,7 @@
 import { SortableTaskList } from "@/components/SortableTaskList";
 import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { useParams } from "@tanstack/react-router";
-import { ArchiveIcon, ArchiveRestoreIcon, MoreHorizontalIcon, PencilIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { TASK_STATUSES, type Task, type TaskStatus } from "../../shared/entities";
 import { uuidv7 } from "../../shared/ids";
@@ -9,7 +9,6 @@ import { byRank } from "../../shared/rank";
 import { Empty, SectionHeading, ShowClosedToggle, STATUS_LABEL } from "@/components/common";
 import { TaskCard, TaskList } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useWorkspace } from "../store/workspace";
@@ -29,7 +28,6 @@ export function ProjectTasksPage() {
   const [featureId, setFeatureId] = useState("");
   const [assignee, setAssignee] = useState<string>("");
   const [showClosed, setShowClosed] = useState(false);
-  const [renaming, setRenaming] = useState<string | null>(null);
   useEffect(() => setFeatureId(""), [project?.id]);
 
   const groups = useMemo(() => {
@@ -58,34 +56,7 @@ export function ProjectTasksPage() {
 
   return (
     <div className="space-y-5">
-      <header className="flex items-center gap-2">
-        {renaming === null ? (
-          <h1 className="min-w-0 flex-1 truncate font-heading text-xl font-semibold" onDoubleClick={() => setRenaming(project.name)}>{project.name}: Tasks</h1>
-        ) : (
-          <form
-            className="flex-1"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (renaming.trim()) socket.send("project.rename", { id: project.id, name: renaming });
-              setRenaming(null);
-            }}
-          >
-            <Input autoFocus value={renaming} onChange={(e) => setRenaming(e.target.value)} onBlur={() => setRenaming(null)} onKeyDown={(e) => e.key === "Escape" && setRenaming(null)} />
-          </form>
-        )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Project actions"><MoreHorizontalIcon /></Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => setRenaming(project.name)}><PencilIcon /> Rename</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => socket.send(archived ? "project.unarchive" : "project.archive", { id: project.id })}>
-              {archived ? <><ArchiveRestoreIcon /> Unarchive</> : <><ArchiveIcon /> Archive</>}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
-      <p className="text-sm leading-relaxed text-muted-foreground">Break work into Tasks, assign one Member to each, and track progress. Reorder Tasks within each status to show what matters next.</p>
+      <PageHeader title="Tasks" description="Organize the work, assign ownership and track progress." />
 
       {archived && <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">This Project is archived. Unarchive it to add Tasks.</p>}
 
@@ -155,7 +126,7 @@ export function ProjectMyTasksPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={project.name + ": My Tasks"} description="Focus on work assigned to you in this Project. In-progress Tasks appear first; completed work stays available through the toggle." />
+      <PageHeader title="My Tasks" description="Focus on work assigned to you in this Project. In-progress Tasks appear first; completed work stays available through the toggle." />
       <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
       {groups.length === 0 && <Empty>Nothing assigned to you in {project.name}.</Empty>}
       {groups.map(({ status, tasks }) => (

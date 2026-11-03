@@ -37,7 +37,7 @@ export function FeaturesPage() {
     </section>;
   });
   return <div className="space-y-5">
-    <PageHeader title={project.name + ": Features"} description="Propose what to build, discuss it together, then accept or reject it. Accepted Features can be broken into Tasks; completion is always a Member’s choice." />
+    <PageHeader title="Features" description="Propose, discuss and agree on what to build." />
     {project.archivedAt === null && <section className="space-y-4 border-l border-border/60 pl-5"><SectionHeader title="Propose a Feature" description="Start with a short title. Add context and discuss the proposal on its detail page." /><form className="flex gap-2" onSubmit={(e) => {
       e.preventDefault();
       if (socket.send("feature.create", { id: uuidv7(), projectId: project.id, title })) setTitle("");

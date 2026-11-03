@@ -5,14 +5,17 @@ import { Toaster } from "@/components/ui/sonner";
 import "./index.css";
 
 const rootRoute = createRootRoute({
-  component: () => (
-    <div className="mx-auto max-w-5xl px-3 pt-3 pb-24 sm:px-4 sm:pt-4">
-      <AppHeader />
-      <Outlet />
-      <Toaster position="bottom-center" />
-    </div>
-  ),
+  component: AppFrame,
 });
+
+function AppFrame() {
+  const { slug } = useParams({ strict: false });
+  return <div className={slug ? "" : "mx-auto max-w-3xl px-4 pt-6 pb-24 sm:px-8"}>
+    <AppHeader />
+    <Outlet />
+    <Toaster position="bottom-center" />
+  </div>;
+}
 
 /** Workspace pages carry their own top bar. */
 function AppHeader() {

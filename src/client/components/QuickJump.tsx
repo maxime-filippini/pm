@@ -9,7 +9,7 @@ import { searchDestination } from "../lib/search";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
-export function QuickJump() {
+export function QuickJump({ navigation = false }: { navigation?: boolean }) {
   const socket = useSocket(), navigate = useNavigate(), { slug } = useParams({ strict: false });
   const epoch = useWorkspace((s) => s.connectionEpoch), status = useWorkspace((s) => s.status);
   const [open, setOpen] = useState(false), [text, setText] = useState(""), [items, setItems] = useState<SearchResult[]>([]);
@@ -43,7 +43,7 @@ export function QuickJump() {
     setOpen(false); void navigate({ to: to!, hash: hash ?? "" });
   };
   return <Dialog.Root open={open} onOpenChange={(value) => { setOpen(value); if (value) setText(""); }}>
-    <Dialog.Trigger asChild><Button variant="ghost" size="icon" aria-label="Search Workspace" title="Search Workspace (⌘K / Ctrl+K)"><SearchIcon /></Button></Dialog.Trigger>
+    <Dialog.Trigger asChild><Button variant="ghost" size="icon" className={navigation ? "size-10 lg:h-10 lg:w-full lg:justify-start lg:gap-3 lg:px-3" : undefined} aria-label="Search Workspace" title="Search Workspace (⌘K / Ctrl+K)"><SearchIcon />{navigation && <span className="hidden lg:inline">Search Workspace</span>}</Button></Dialog.Trigger>
     <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-40 bg-black/60" />
       <Dialog.Content className="fixed top-[10%] left-1/2 z-50 max-h-[80vh] w-[calc(100%_-_1.5rem)] max-w-xl -translate-x-1/2 overflow-y-auto rounded-xl border bg-background p-4 shadow-xl" onOpenAutoFocus={(e) => { e.preventDefault(); input.current?.focus(); }}>
         <div className="flex items-start justify-between gap-3"><div><Dialog.Title className="font-heading text-lg font-semibold">Find work</Dialog.Title><Dialog.Description className="mb-4 text-sm text-muted-foreground">Search Tasks, Features and Topics across every active Project.</Dialog.Description></div><Dialog.Close asChild><Button variant="ghost" size="icon" aria-label="Close search"><XIcon /></Button></Dialog.Close></div>
