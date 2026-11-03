@@ -1,4 +1,4 @@
-import type { Activity, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
+import type { Activity, Comment, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
 
 // Raw SQLite rows → the camelCase shapes sent to clients. Never expose github_token_enc.
 
@@ -105,3 +105,8 @@ export function one<T>(sql: SqlStorage, map: (r: Row) => T, query: string, ...pa
 export function all<T>(sql: SqlStorage, map: (r: Row) => T, query: string, ...params: SqlStorageValue[]): T[] {
   return sql.exec<Row>(query, ...params).toArray().map(map);
 }
+
+export const toComment = (r: Row): Comment => ({
+  id: str(r.id), targetType: str(r.target_type) as Comment["targetType"], targetId: str(r.target_id),
+  authorId: str(r.author_id), via: strOrNull(r.via), body: str(r.body), createdAt: num(r.created_at), editedAt: numOrNull(r.edited_at),
+});

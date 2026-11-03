@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { Activity, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
-import { Id } from "./entities";
+import type { Activity, Comment, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
+import { Id, CommentTarget } from "./entities";
 
 // ---- Client → server ----
 
@@ -16,6 +16,7 @@ export const ClientMessage = z.discriminatedUnion("type", [
 export type ClientMessage = z.infer<typeof ClientMessage>;
 
 export const querySchemas = {
+  "comments.list": z.object({ target: CommentTarget, cursor: z.object({ createdAt: z.number().int(), id: Id }).optional(), limit: z.number().int().min(1).max(200).default(50) }),
   "activity.list": z.object({ before: z.number().int().optional(), limit: z.number().int().min(1).max(200).default(50) }),
 } as const;
 export type QueryName = keyof typeof querySchemas;
@@ -43,3 +44,5 @@ export type ServerMessage =
   | { type: "result_error"; id: string; error: { code: ErrorCode; message: string } };
 
 export type ActivityPage = { items: Activity[] };
+
+export type CommentsPage = { items: Comment[]; nextCursor: { createdAt: number; id: string } | null };

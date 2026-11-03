@@ -183,7 +183,7 @@ All messages are JSON and validated with zod on both ends.
 
 ### Query contracts (remaining implementation)
 
-The contracts below are the target for the next implementation work. Currently only `activity.list({ before?: number, limit?: number }) → { items }` exists; its timestamp-only cursor must be extended before the feed ships. Query failures use `result_error` with the request id, rather than command `reject` messages.
+The contracts below are the target for the next implementation work. `comments.list` is implemented. `activity.list` currently supports only `{ before?: number, limit?: number } → { items }`; its timestamp-only cursor must be extended before the feed ships. Query failures use `result_error` with the request id, rather than command `reject` messages.
 
 - **Comment target**: `{ type: "task" | "feature", id: string }`. The target must exist in this Workspace and a Task must not be soft deleted. Comments on a deleted Task are retained but hidden until it is restored. Create/edit bodies are trimmed, nonempty, and limited to 20,000 characters. Any Member may create; only the author may edit/delete. Repeated creates/deletes are idempotent.
 - **`comments.list`**: `{ target, cursor?: { createdAt, id }, limit?: number }` → `{ items: Comment[], nextCursor: { createdAt, id } | null }`. Default limit 50, range 1–200. Order by `(created_at ASC, id ASC)` and return rows strictly after the cursor. Fetch one extra row to determine `nextCursor`. The UI appends older-to-newer pages and offers Load more.
