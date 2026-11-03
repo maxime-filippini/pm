@@ -25,9 +25,31 @@
     "bindings": [{ "name": "WORKSPACE", "class_name": "WorkspaceDO" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorkspaceDO"] }],
-  // ACCESS_TEAM_DOMAIN and ACCESS_AUD are passed only at deploy time (see the "deploy"
+  // ACCESS_TEAM_DOMAIN and ACCESS_AUD are passed only at deploy time (see "deploy:worker"
   // script), so local dev never sees them and DEV_ACCESS_EMAIL cannot trip the fail-closed check.
   "vars": {
     "ADMIN_EMAILS": "maxime.filippini@gmail.com"
+  },
+  "env": {
+    // Shared preview for feature branches (ADR 0005): its own Worker, hostname, D1 and
+    // Durable Objects, so previews never touch production data. Latest branch push wins.
+    "preview": {
+      "name": "pm-preview",
+      "routes": [{ "pattern": "pm-preview.maximefilippini.me", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "pm-registry-preview",
+          "database_id": "88d04107-a0a9-4f20-87fa-2e8e6ce8f300",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [{ "name": "WORKSPACE", "class_name": "WorkspaceDO" }]
+      },
+      "vars": {
+        "ADMIN_EMAILS": "maxime.filippini@gmail.com"
+      }
+    }
   }
 }
