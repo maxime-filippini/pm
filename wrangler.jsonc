@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pm",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "7161f73e7a5a97a5d2fe7ad26e7e28f9",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "pm.maximefilippini.me", "custom_domain": true }],
+  "observability": { "enabled": true },
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pm-registry",
+      "database_id": "1bc07a26-eadb-4bde-92fb-62bb45661896",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "WORKSPACE", "class_name": "WorkspaceDO" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorkspaceDO"] }],
+  "vars": {
+    "ACCESS_TEAM_DOMAIN": "maxime-filippini.cloudflareaccess.com",
+    "ACCESS_AUD": "5fe3e24c59fba6ebdef5917dd0e8d9c59e3faa30e51ca0789c611c64413e3e5b",
+    "ADMIN_EMAILS": "maxime.filippini@gmail.com"
+  }
+}
