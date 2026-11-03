@@ -54,6 +54,33 @@ export type Task = {
   completedAt: number | null;
 };
 
+/** A thing to talk about at the Project's next Meeting. Resolved once it has an Outcome. */
+export type Topic = {
+  id: string;
+  projectId: string;
+  title: string;
+  body: string;
+  /** Optional reference to a Task in the same Project. */
+  refType: "task" | null;
+  refId: string | null;
+  rank: string;
+  authorId: string;
+  createdAt: number;
+  outcome: string | null;
+  resolvedInMeetingId: string | null;
+  resolvedAt: number | null;
+};
+
+export type Meeting = {
+  id: string;
+  projectId: string;
+  startedAt: number;
+  startedBy: string;
+  endedAt: number | null;
+  endedBy: string | null;
+  attendeeIds: string[];
+};
+
 export type Activity = {
   id: string;
   at: number;
@@ -71,6 +98,8 @@ export type EntityMap = {
   project: Project;
   feature: Feature;
   task: Task;
+  topic: Topic;
+  meeting: Meeting;
   activity: Activity;
 };
 export type EntityName = keyof EntityMap;

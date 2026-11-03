@@ -1,4 +1,4 @@
-import type { Activity, Feature, Member, Project, Task } from "../../shared/entities";
+import type { Activity, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
 
 // Raw SQLite rows → the camelCase shapes sent to clients. Never expose github_token_enc.
 
@@ -54,6 +54,37 @@ export const toTask = (r: Row): Task => ({
   updatedAt: num(r.updated_at),
   completedAt: numOrNull(r.completed_at),
 });
+
+export const toTopic = (r: Row): Topic => ({
+  id: str(r.id),
+  projectId: str(r.project_id),
+  title: str(r.title),
+  body: str(r.body),
+  refType: r.ref_type === "task" ? "task" : null,
+  refId: strOrNull(r.ref_id),
+  rank: str(r.rank),
+  authorId: str(r.author_id),
+  createdAt: num(r.created_at),
+  outcome: strOrNull(r.outcome),
+  resolvedInMeetingId: strOrNull(r.resolved_in_meeting_id),
+  resolvedAt: numOrNull(r.resolved_at),
+});
+
+/** Expects an `attendee_ids` column: a JSON array built with json_group_array (see MEETING_SELECT). */
+export const toMeeting = (r: Row): Meeting => ({
+  id: str(r.id),
+  projectId: str(r.project_id),
+  startedAt: num(r.started_at),
+  startedBy: str(r.started_by),
+  endedAt: numOrNull(r.ended_at),
+  endedBy: strOrNull(r.ended_by),
+  attendeeIds: (JSON.parse(str(r.attendee_ids ?? "[]")) as Array<string | null>).filter((x): x is string => x !== null).sort(),
+});
+
+/** Meetings with their attendee ids. Append a WHERE on `m.` columns, then GROUP_BY_MEETING. */
+export const MEETING_SELECT =
+  "SELECT m.*, json_group_array(a.member_id) AS attendee_ids FROM meetings m LEFT JOIN meeting_attendees a ON a.meeting_id = m.id";
+export const GROUP_BY_MEETING = "GROUP BY m.id";
 
 export const toActivity = (r: Row): Activity => ({
   id: str(r.id),

@@ -20,7 +20,7 @@ export function WorkspaceLayout() {
   const { key } = useParams({ strict: false });
   return (
     <WorkspaceProvider slug={slug}>
-      <nav className="sticky top-0 z-10 -mx-3 mb-5 flex items-center gap-1 border-b bg-background/95 px-3 py-2 text-sm backdrop-blur sm:-mx-4 sm:px-4">
+      <nav className="sticky top-0 z-10 -mx-3 mb-5 flex flex-wrap items-center gap-1 border-b bg-background/95 px-3 py-2 text-sm backdrop-blur sm:-mx-4 sm:px-4">
         <Link to="/" className="mr-1 shrink-0 px-1 font-heading font-semibold" title="All Workspaces">PM</Link>
         {key ? <ProjectNav slug={slug} projectKey={key} /> : <WorkspaceNav slug={slug} />}
         <span className="flex-1" />
@@ -52,16 +52,28 @@ function ProjectNav({ slug, projectKey }: { slug: string; projectKey: string }) 
   const onMyTasks = Boolean(matchRoute({ to: "/w/$slug/p/$key/me", params }));
   // On a Task neither tab is lit: you may have come from either list, and Back returns there.
   const onTasks = Boolean(matchRoute({ to: "/w/$slug/p/$key", params }));
+  const onMeetings = Boolean(matchRoute({ to: "/w/$slug/p/$key/meetings", params, fuzzy: true }));
+  const meetingOpen = useWorkspace((s) => {
+    const project = Object.values(s.view.projects).find((p) => p.key === projectKey);
+    return Boolean(project && Object.values(s.view.meetings).some((m) => m.projectId === project.id && m.endedAt === null));
+  });
   return (
     <>
-      <ProjectSwitcher slug={slug} projectKey={projectKey} keepMyTasks={onMyTasks} />
-      <Link to="/w/$slug/p/$key" params={params} className={cn(tab, onTasks && activeTab)}>Tasks</Link>
-      <Link to="/w/$slug/p/$key/me" params={params} className={cn(tab, onMyTasks && activeTab)}>My Tasks</Link>
+      <ProjectSwitcher slug={slug} projectKey={projectKey} tab={onMyTasks ? "me" : onMeetings ? "meetings" : "tasks"} />
+      {/* On phones the tabs get their own row under the Project switcher. */}
+      <div className="order-last -mx-1 flex w-full gap-1 sm:order-none sm:mx-0 sm:w-auto">
+        <Link to="/w/$slug/p/$key" params={params} className={cn(tab, onTasks && activeTab)}>Tasks</Link>
+        <Link to="/w/$slug/p/$key/me" params={params} className={cn(tab, onMyTasks && activeTab)}>My Tasks</Link>
+        <Link to="/w/$slug/p/$key/meetings" params={params} className={cn(tab, "gap-1.5", onMeetings && activeTab)}>
+          Meetings
+          {meetingOpen && <span className="size-1.5 rounded-full bg-emerald-400" title="Meeting in progress" />}
+        </Link>
+      </div>
     </>
   );
 }
 
-function ProjectSwitcher({ slug, projectKey, keepMyTasks }: { slug: string; projectKey: string; keepMyTasks: boolean }) {
+function ProjectSwitcher({ slug, projectKey, tab }: { slug: string; projectKey: string; tab: "tasks" | "me" | "meetings" }) {
   const navigate = useNavigate();
   const projects = useWorkspace((s) => s.view.projects);
   const options = useMemo(
@@ -70,15 +82,20 @@ function ProjectSwitcher({ slug, projectKey, keepMyTasks }: { slug: string; proj
   );
   const current = options.find((p) => p.key === projectKey);
 
-  const open = (key: string) =>
-    keepMyTasks ? navigate({ to: "/w/$slug/p/$key/me", params: { slug, key } }) : navigate({ to: "/w/$slug/p/$key", params: { slug, key } });
+  // Switching Projects keeps you on the same tab.
+  const open = (key: string) => {
+    const params = { slug, key };
+    if (tab === "me") navigate({ to: "/w/$slug/p/$key/me", params });
+    else if (tab === "meetings") navigate({ to: "/w/$slug/p/$key/meetings", params });
+    else navigate({ to: "/w/$slug/p/$key", params });
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="mr-1 h-9 min-w-0 shrink px-2 sm:h-8" aria-label="Switch Project">
+        <Button variant="ghost" className="mr-1 h-9 min-w-0 shrink-0 px-2 sm:h-8" aria-label="Switch Project">
           <span className="font-mono text-xs text-muted-foreground">{projectKey}</span>
-          <span className="max-w-[8rem] truncate sm:max-w-[16rem]">{current?.name ?? projectKey}</span>
+          <span className="max-w-[12rem] truncate sm:max-w-[16rem]">{current?.name ?? projectKey}</span>
           <ChevronsUpDownIcon className="text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>

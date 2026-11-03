@@ -70,11 +70,14 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [ ] `GET /api/w/:slug/export`
 
 ## M3: Meetings
-- [ ] Topics: `topic.create/update/move/delete` (author only, unresolved only), reorderable list
-- [ ] Meetings: `meeting.start/setAttendees/recordOutcome/clearOutcome/close`, one open at a time, carry-over
-- [ ] Meeting view: attendees, Outcome boxes, quick "create Feature/Task" prefilling Outcome, Close
-- [ ] Past Meetings view + `meeting.get` query
-- [ ] Workspace home: next Meeting summary
+Topics and Meetings are per Project (a "Meetings" tab next to Tasks / My Tasks).
+- [x] Topics: `topic.create/update/move/delete` (author only, unresolved only), reorderable list, optional related Task
+- [x] Meetings: `meeting.start/setAttendees/recordOutcome/clearOutcome/close`, one open per Project, carry-over
+- [x] Meeting view: attendees, Outcome boxes, related Task status/assignee, "create Task" with assignee (`meeting.createTask` notes the key in the Outcome), Close with confirmation
+- [ ] "Create Feature" from a Topic (needs Features, M2)
+- [x] Past Meetings list and detail (from the snapshot; no `meeting.get` query needed)
+- [x] Projects list: Topics to discuss and "Meeting in progress"
+- [x] Tests: Topic rules, one open Meeting per Project, Outcomes only while open, carry-over, closed Meetings read-only, `meeting.createTask`
 
 ## M4: GitHub
 - [ ] `GITHUB_TOKEN_KEY` secret; AES-GCM encrypt/decrypt; `project.setGithubToken` (clears `fetch_error`s), `hasGithubToken`

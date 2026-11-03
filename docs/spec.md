@@ -116,11 +116,11 @@ pull_request_links (id TEXT PK, task_id TEXT, url TEXT, owner TEXT, repo TEXT, n
              fetched_at INT NULL, fetch_error TEXT NULL,   -- 'no_token' | 'unauthorized' | 'not_found' | 'unavailable'
              created_by TEXT, created_at INT, UNIQUE(task_id, url))
 
-topics      (id TEXT PK, title TEXT, body TEXT, ref_type TEXT NULL, ref_id TEXT NULL, rank TEXT,
+topics      (id TEXT PK, project_id TEXT, title TEXT, body TEXT, ref_type TEXT NULL, ref_id TEXT NULL, rank TEXT,
              author_id TEXT, created_at INT,
              outcome TEXT NULL, resolved_in_meeting_id TEXT NULL, resolved_at INT NULL)
 
-meetings    (id TEXT PK, started_at INT, started_by TEXT, ended_at INT NULL, ended_by TEXT NULL)
+meetings    (id TEXT PK, project_id TEXT, started_at INT, started_by TEXT, ended_at INT NULL, ended_by TEXT NULL)
 meeting_attendees (meeting_id TEXT, member_id TEXT, PK(meeting_id, member_id))
 
 activity    (id TEXT PK, at INT, actor_id TEXT, via TEXT NULL, kind TEXT,
@@ -135,7 +135,7 @@ activity    (id TEXT PK, at INT, actor_id TEXT, via TEXT NULL, kind TEXT,
 - **Feature/Task linkage**: a Task may reference a Feature only from the same Project. Any Feature status is allowed, but the UI suggests accepted ones.
 - **Task status**: moving to `done` sets `completed_at`, and moving away from it clears it.
 - **No hard delete** for Features, Tasks or Projects. Comments can be edited and deleted by their author only. Topics can be edited by anyone, and deleted only by their author while unresolved.
-- **Meetings**: at most one open Meeting (`ended_at IS NULL`) per Workspace. While a Meeting is open, its agenda is every unresolved Topic, including ones added during it. Recording an Outcome resolves the Topic within the open Meeting. An Outcome can only be recorded while a Meeting is open, and can be cleared again before it closes. Attendees default to all active Members when the Meeting starts. Closing a Meeting leaves Topics without an Outcome unresolved, so they carry over.
+- **Meetings**: Topics and Meetings belong to a Project. At most one open Meeting (`ended_at IS NULL`) per Project. While a Meeting is open, its agenda is every unresolved Topic of that Project, including ones added during it. Recording an Outcome resolves the Topic within the open Meeting. An Outcome can only be recorded while a Meeting is open, and can be cleared again before it closes. Attendees default to all active Members when the Meeting starts. Closing a Meeting leaves Topics without an Outcome unresolved, so they carry over. A Topic may reference a Task in the same Project. Topics resolved in a closed Meeting are read-only.
 - **Pull Request links**: a URL must match `https://github.com/{owner}/{repo}/pull/{number}`. A Task can have several, and the same PR can be linked to several Tasks.
 
 ## 5. Sync protocol
@@ -149,7 +149,7 @@ All messages are JSON and validated with zod on both ends.
 ### Server → client
 
 ```ts
-{ type: "snapshot", version, data: { members, projects, features, tasks, pullRequestLinks, topics, openMeeting, lastMeeting } }
+{ type: "snapshot", version, data: { members, projects, features, tasks, pullRequestLinks, topics, meetings } }
 { type: "change",   version, cause?: commandId, changes: Array<{ entity, op: "upsert" | "delete", row }> }
 { type: "ack",      id: commandId }
 { type: "reject",   id: commandId, error: { code, message } }
@@ -165,7 +165,7 @@ All messages are JSON and validated with zod on both ends.
 
 ```ts
 { type: "cmd",      id, name, args }      // see §6
-{ type: "query",    id, name, args }      // comments.list, activity.list, search, meeting.get
+{ type: "query",    id, name, args }      // comments.list, activity.list, search
 { type: "presence", viewing?: Ref, editing?: { ref, field } | null }
 ```
 
@@ -198,14 +198,15 @@ Every command runs as `(actor: Member, via?: string, args)`. It validates, then 
 | `pr.link` | `id, taskId, url` | triggers a fetch |
 | `pr.unlink` | `id` | |
 | `pr.refresh` | `taskId` | sent by the client when a Task detail opens; fetches only links with `fetched_at` older than 60 s |
-| `topic.create` | `id, title, body?, ref?` | |
+| `topic.create` | `id, projectId, title, body?, ref?` | `ref` is `{ type: "task", id }` in the same Project |
 | `topic.update` | `id, title?, body?, ref?` | |
 | `topic.move` | `id, rank` | |
 | `topic.delete` | `id` | author only, unresolved only |
-| `meeting.start` | `id` | rejected if one is already open |
+| `meeting.start` | `id, projectId` | rejected if the Project already has an open Meeting; attendees default to all active Members |
 | `meeting.setAttendees` | `id, memberIds` | |
 | `meeting.recordOutcome` | `topicId, outcome` | open Meeting only |
 | `meeting.clearOutcome` | `topicId` | open Meeting only, Topic resolved in this Meeting |
+| `meeting.createTask` | `topicId, taskId, title, assigneeId?` | open Meeting only; creates the Task and appends "Created WEB-12 for Alice" to the Topic's Outcome in one transaction |
 | `meeting.close` | `id` | |
 
 Admin operations (`workspace.create`, `member.add`, `member.remove`, `member.rename`) are Worker HTTP endpoints under `/api/admin`. They write to D1 and then call an RPC method on the DO to update its `members` mirror. Removing a Member marks them inactive and closes their sockets.
@@ -224,14 +225,14 @@ See [ADR 0004](./adr/0004-pull-request-links-are-manual-and-polled.md).
 
 All views are responsive and work on a phone first.
 
-- **Workspace home**: list of Projects, and a summary of the next Meeting (count of unresolved Topics).
+- **Workspace home**: list of Projects, each with its open Task count, Topics to discuss, and whether a Meeting is in progress.
 - **Project / Tasks**: list grouped by status, sortable by hand (drag on desktop, "move up/down" on mobile), with filters for status, assignee and Feature.
 - **My Tasks**: Tasks assigned to me across Projects, excluding `done` and `canceled` by default.
 - **Features**: per Project, `proposed` first, then `accepted` with Task progress (n/m done), then `done` and `rejected` collapsed.
 - **Feature detail**: description, status controls (with who decided and when), Tasks, Comments, Activity.
 - **Task detail**: key, title, description, status, assignee, Feature, Pull Request links with state badges, Comments, Activity.
-- **Topics / Meeting**: an unresolved Topic list you can reorder, with "Start Meeting". During a Meeting: attendee toggles, each Topic with an Outcome box and quick "create Feature" / "create Task" actions (which prefill the Outcome), and "Close Meeting".
-- **Past Meetings**: date, attendees, Topics and their Outcomes.
+- **Topics / Meeting** (a Project tab): an unresolved Topic list you can reorder, with "Start Meeting". During a Meeting: attendee toggles, each Topic with an Outcome box, its related Task's status and assignee, a quick "create Task" (title + assignee, noted in the Outcome), and "Close Meeting". "Create Feature" comes with Features.
+- **Past Meetings** (under the Project's Meetings tab): date, attendees, Topics and their Outcomes.
 - **Activity**: a feed for the whole Workspace, paged with `activity.list`.
 - **⌘K quick-jump**: jump to a Task by key, or search Tasks, Features and Topics by title with SQL `LIKE`. On mobile, a search button opens the same dialog.
 - **Project settings**: rename, archive, GitHub token (write-only field).

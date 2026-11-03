@@ -48,6 +48,13 @@ export const migrations: string[] = [
   CREATE INDEX activity_at ON activity(at);
   CREATE INDEX activity_target ON activity(target_type, target_id);
   `,
+  // 2: Topics and Meetings belong to a Project; at most one open Meeting per Project.
+  `
+  ALTER TABLE topics ADD COLUMN project_id TEXT;
+  ALTER TABLE meetings ADD COLUMN project_id TEXT;
+  CREATE INDEX topics_project ON topics(project_id, rank);
+  CREATE UNIQUE INDEX meetings_one_open_per_project ON meetings(project_id) WHERE ended_at IS NULL;
+  `,
 ];
 
 export function migrate(sql: SqlStorage): void {
