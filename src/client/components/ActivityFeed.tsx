@@ -65,7 +65,7 @@ export function ActivityFeed({ target }: { target?: ActivityTarget }) {
     });
   }, [targetKey]);
   useEffect(() => { if (status === "online") void load(); }, [targetKey, epoch, status, revision]);
-  return <section className="space-y-4 border-t pt-5">
+  return <section className="space-y-4 border-l border-border/60 pl-5">
     <SectionHeader title="Activity" description="Who changed what, and when. Deleted Tasks and Meetings can be restored here." />
     <ol className="divide-y">{items.map((item) => <ActivityRow key={item.id} item={item} />)}</ol>
     {loading && <p role="status" className="text-sm text-muted-foreground">Loading Activity…</p>}

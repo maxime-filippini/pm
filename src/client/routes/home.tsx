@@ -43,7 +43,7 @@ export function HomePage() {
 /** Opens the Project you last worked in, or the Project list the first time. */
 function WorkspaceLink({ slug, name }: { slug: string; name: string }) {
   const key = getLastProject(slug);
-  const className = "block rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:bg-muted";
+  const className = "block rounded-md px-3 py-3 text-sm font-medium transition-colors hover:bg-muted/40";
   return key ? (
     <Link to="/w/$slug/p/$key" params={{ slug, key }} className={className}>{name}</Link>
   ) : (

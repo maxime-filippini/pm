@@ -37,7 +37,7 @@ export function MarkdownInput(props: ComponentProps<typeof Textarea>) {
   return <div className="min-w-0 space-y-3">
     <Textarea {...props} aria-describedby={id} />
     <p id={id} className="text-xs text-muted-foreground">Markdown supported. Task keys such as WEB-12 link to existing Tasks.</p>
-    <div className="min-w-0 rounded-md border bg-muted/30 p-3">
+    <div className="min-w-0 border-l border-border/60 pl-4">
       <p className="mb-2 text-xs font-medium text-muted-foreground">Live preview</p>
       {props.value ? <Markdown text={String(props.value)} /> : <p className="text-sm text-muted-foreground">Your formatted text will appear here.</p>}
     </div>

@@ -89,39 +89,49 @@ export function ProjectTasksPage() {
 
       {archived && <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">This Project is archived. Unarchive it to add Tasks.</p>}
 
-      {!archived && (
-        <section className="space-y-3 rounded-xl border p-4"><SectionHeader title="Add a Task" description="A Task is one piece of work. The current assignee and Feature filters also apply to new Tasks." />
-        <form onSubmit={create} className="flex gap-2">
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New Task title" className="h-9" />
-          <Button type="submit" className="h-9" disabled={!title.trim()}><PlusIcon /> Add</Button>
-        </form></section>
-      )}
+      <div className={archived ? "" : "grid gap-8 md:grid-cols-[14rem_minmax(0,1fr)] md:gap-10"}>
+        {!archived && (
+          <section aria-label="Add a Task" className="space-y-4 md:border-r md:pr-8">
+            <SectionHeader title="Add a Task" description="Start with a short title. Add details after creating the Task." />
+            <form onSubmit={create} className="flex flex-col gap-2 sm:flex-row md:flex-col">
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs doing?" aria-label="New Task title" maxLength={200} />
+              <Button type="submit" disabled={!title.trim()}><PlusIcon /> Add Task</Button>
+            </form>
+            {(featureId || assignee) && <p className="text-xs leading-relaxed text-muted-foreground">New Tasks use the selected Feature and assignee filters.</p>}
+          </section>
+        )}
 
-      <section className="space-y-3 rounded-xl border p-4"><SectionHeader title="Find Tasks" description="Filter by assignee or Feature, or include completed work." /><div className="flex flex-wrap items-center gap-4 text-sm">
-        <NativeSelect value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assignee filter">
-          <NativeSelectOption value="">Anyone</NativeSelectOption>
-          {me && <NativeSelectOption value={me}>Me</NativeSelectOption>}
-          <NativeSelectOption value="none">Unassigned</NativeSelectOption>
-          {activeMembers.filter((m) => m.id !== me).map((m) => <NativeSelectOption key={m.id} value={m.id}>{m.name}</NativeSelectOption>)}
-        </NativeSelect>
-        <NativeSelect className="max-w-full" value={featureId} onChange={(e) => setFeatureId(e.target.value)} aria-label="Feature filter">
-          <NativeSelectOption value="">All Features</NativeSelectOption>
-          <NativeSelectOption value="none">Standalone Tasks</NativeSelectOption>
-          {Object.values(features).filter((f) => f.projectId === project.id).map((f) => <NativeSelectOption key={f.id} value={f.id}>{f.title}</NativeSelectOption>)}
-        </NativeSelect>
-        <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
-      </div></section>
+        <section aria-label="Current Tasks" className="min-w-0 space-y-6">
+          <div className="space-y-4">
+            <SectionHeader title="Current Tasks" description="Filter the list, open a Task, or reorder work within a status." />
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <NativeSelect value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assignee filter">
+                <NativeSelectOption value="">Anyone</NativeSelectOption>
+                {me && <NativeSelectOption value={me}>Me</NativeSelectOption>}
+                <NativeSelectOption value="none">Unassigned</NativeSelectOption>
+                {activeMembers.filter((m) => m.id !== me).map((m) => <NativeSelectOption key={m.id} value={m.id}>{m.name}</NativeSelectOption>)}
+              </NativeSelect>
+              <NativeSelect className="max-w-full" value={featureId} onChange={(e) => setFeatureId(e.target.value)} aria-label="Feature filter">
+                <NativeSelectOption value="">All Features</NativeSelectOption>
+                <NativeSelectOption value="none">Standalone Tasks</NativeSelectOption>
+                {Object.values(features).filter((f) => f.projectId === project.id).map((f) => <NativeSelectOption key={f.id} value={f.id}>{f.title}</NativeSelectOption>)}
+              </NativeSelect>
+              <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
+            </div>
+          </div>
 
-      {groups.map(({ status, tasks }) => (
-        <section key={status} className="space-y-2">
-          <SectionHeading count={tasks.length}>{STATUS_LABEL[status]}</SectionHeading>
-          {tasks.length === 0 ? (
-            <p className="rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground">Nothing here.</p>
-          ) : (
-            <SortableTaskList slug={slug} project={project} tasks={tasks} onReorder={reorder} />
-          )}
+          {groups.map(({ status, tasks }) => (
+            <section key={status} className="space-y-2">
+              <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{STATUS_LABEL[status]} <span className="font-normal">{tasks.length}</span></h3>
+              {tasks.length === 0 ? (
+                <p className="py-3 text-sm text-muted-foreground">No Tasks in this view.</p>
+              ) : (
+                <SortableTaskList slug={slug} project={project} tasks={tasks} onReorder={reorder} />
+              )}
+            </section>
+          ))}
         </section>
-      ))}
+      </div>
     </div>
   );
 }

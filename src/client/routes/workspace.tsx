@@ -1,6 +1,6 @@
 import { QuickJump } from "@/components/QuickJump";
 import { Link, Outlet, useMatchRoute, useNavigate, useParams } from "@tanstack/react-router";
-import { CheckIcon, ChevronsUpDownIcon, FolderIcon, ListTodoIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronsUpDownIcon, FolderIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,6 +64,7 @@ function ProjectNav({ slug, projectKey }: { slug: string; projectKey: string }) 
   });
   return (
     <>
+      <Link to="/w/$slug" params={{ slug }} className={cn(tab, "gap-1.5 px-2")} title="Back to Workspace"><ArrowLeftIcon className="size-3.5" /> Workspace</Link>
       <ProjectSwitcher slug={slug} projectKey={projectKey} tab={onSettings ? "settings" : onMyTasks ? "me" : onFeatures ? "features" : onMeetings ? "meetings" : "tasks"} />
       {/* On phones the tabs get their own row under the Project switcher. */}
       <div className="order-last -mx-1 flex w-full gap-1 sm:order-none sm:mx-0 sm:w-auto overflow-x-auto">
@@ -104,7 +105,7 @@ function ProjectSwitcher({ slug, projectKey, tab }: { slug: string; projectKey: 
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="mr-1 h-9 min-w-0 shrink-0 px-2 sm:h-8" aria-label="Switch Project">
           <span className="font-mono text-xs text-muted-foreground">{projectKey}</span>
-          <span className="max-w-[12rem] truncate sm:max-w-[16rem]">{current?.name ?? projectKey}</span>
+          <span className="max-w-[8rem] truncate sm:max-w-[16rem]">{current?.name ?? projectKey}</span>
           <ChevronsUpDownIcon className="text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
@@ -119,10 +120,7 @@ function ProjectSwitcher({ slug, projectKey, tab }: { slug: string; projectKey: 
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate({ to: "/w/$slug", params: { slug } })}>
-          <FolderIcon /> All Projects
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => navigate({ to: "/w/$slug/me", params: { slug } })}>
-          <ListTodoIcon /> My Tasks in every Project
+          <FolderIcon /> Back to Workspace
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -18,6 +18,9 @@ All remaining v1 code features have been implemented in the stack below, includi
 | 8 | [#19](https://github.com/maxime-filippini/pm/pull/19) | `style/page-sections` | `feat/github` | Page explanations and sections |
 | 9 | [#20](https://github.com/maxime-filippini/pm/pull/20) | `perf/route-splitting` | `style/page-sections` | Lazy routes and bundle reduction |
 | 10 | [#21](https://github.com/maxime-filippini/pm/pull/21) | `fix/sync-polish` | `perf/route-splitting` | Final sync races, deduplication and readable history |
+| 11 | [#22](https://github.com/maxime-filippini/pm/pull/22) | `feat/open-layout` | `fix/sync-polish` | Open sections, vertical Task split, row deletion and Workspace return |
+
+Latest design refinement ([#22](https://github.com/maxime-filippini/pm/pull/22)): section boxes are replaced by open spacing and vertical rules. Task creation has its own desktop column; filters and results share Current Tasks. Shared Task rows offer Delete with Undo. Workspace return replaces the cross-Project My Tasks switcher action. Desktop and 375 px browser checks covered these flows, including keyboard reordering.
 
 Final local verification: **70 tests passed**, typecheck, production build, convention and diff checks passed. Browser checks covered Comments, Restore after leaving/reopening Activity, Markdown preview, two-tab concurrent drafts, search keyboard controls, installation assets/export, PR link/unlink and no-token states, settings, named sections and 375 px layouts. GitHub states/errors and token privacy were tested with mocks, not a real credential.
 

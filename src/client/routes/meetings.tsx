@@ -34,7 +34,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -109,11 +108,11 @@ function NextMeeting({ slug, project }: { slug: string; project: Project }) {
       </header>
 
       <p className="text-sm leading-relaxed text-muted-foreground">Build the agenda between Meetings. Topics stay here until an Outcome records what you agreed.</p>
-      <section className="space-y-3 rounded-xl border p-4">
+      <section className="space-y-4 border-l border-border/60 pl-5">
         <SectionHeader title="Agenda" description="Add context, link related Tasks and put the most useful discussions first." />
         <SectionHeading count={agenda.length}>Topics</SectionHeading>
         {agenda.length === 0 ? (
-          <p className="rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground">Nothing to discuss yet. Add a Topic below.</p>
+          <p className="py-3 text-sm text-muted-foreground">Nothing to discuss yet. Add a Topic below.</p>
         ) : (
           <SortableList
             items={agenda}
@@ -138,7 +137,7 @@ function TopicCard({ slug, project, topic, row }: { slug: string; project: Proje
   const { handle, moveButtons, className, ...li } = row;
 
   return (
-    <li id={"topic-" + topic.id} {...li} className={cn("flex items-start gap-3 rounded-lg border bg-card px-3 py-3 text-sm sm:py-2.5", className)}>
+    <li id={"topic-" + topic.id} {...li} className={cn("flex items-start gap-3 rounded-md px-2 py-3 text-sm transition-colors hover:bg-muted/30 sm:py-2.5", className)}>
       <span className="mt-0.5 flex">{handle}</span>
       {editing ? (
         <TopicEditor project={project} topic={topic} onDone={() => setEditing(false)} />
@@ -430,7 +429,7 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
 
   return (
     <li id={"topic-" + topic.id}>
-      <Card className={cn("gap-3 px-4", resolved && "bg-card/50")}>
+      <section className={cn("space-y-4 border-l border-border/60 py-2 pl-5", resolved && "border-emerald-500/30")}>
         <div className="flex items-start gap-3">
           {resolved ? (
             <CheckCircle2Icon className="mt-0.5 size-5 shrink-0 text-emerald-400" aria-label="Discussed" />
@@ -474,7 +473,7 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
         <Button variant="ghost" size="sm" className="self-start ml-8" onClick={() => setCreatingFeature(true)}><PlusIcon /> Create Feature</Button>
         {creatingFeature && <CreateFeatureForm topic={topic} onDone={() => setCreatingFeature(false)} />}
         {creatingTask && <CreateTaskForm topic={topic} onDone={() => setCreatingTask(false)} />}
-      </Card>
+      </section>
     </li>
   );
 }
@@ -525,7 +524,7 @@ function CreateTaskForm({ topic, onDone }: { topic: Topic; onDone: () => void })
     if (socket.send("meeting.createTask", { topicId: topic.id, taskId: uuidv7(), title, assigneeId: assigneeId || null })) onDone();
   };
   return (
-    <form onSubmit={submit} className="ml-8 space-y-2 rounded-md border border-dashed p-3">
+    <form onSubmit={submit} className="ml-8 space-y-3 border-l border-border/60 pl-4">
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">New Task</p>
       <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Task title" onKeyDown={(e) => e.key === "Escape" && onDone()} />
       <div className="flex flex-wrap items-center gap-2">
@@ -597,7 +596,7 @@ function PastMeetings({ slug, project }: { slug: string; project: Project }) {
             <Link
               to="/w/$slug/p/$key/meetings/$meetingId"
               params={{ slug, key: project.key, meetingId: m.id }}
-              className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3 text-sm transition-colors hover:bg-muted"
+              className="flex items-center gap-3 rounded-md px-2 py-3 text-sm transition-colors hover:bg-muted/40"
             >
               <span className="flex-1 font-medium">{date(m.startedAt)}</span>
               <span className="text-xs text-muted-foreground">
@@ -660,13 +659,13 @@ export function PastMeetingPage() {
         <ol className="space-y-2">
           {topics.map((t) => (
             <li key={t.id} id={"topic-" + t.id}>
-              <Card className="gap-2 px-4">
+              <section className="space-y-3 border-l border-border/60 py-1 pl-5">
                 <p className="font-medium">{t.title}</p>
                 {t.body && <Markdown text={t.body} />}
                 <div className="rounded-md bg-muted/60 px-3 py-2">
                   <Markdown text={t.outcome ?? ""} />
                 </div>
-              </Card>
+              </section>
             </li>
           ))}
         </ol>
@@ -679,7 +678,7 @@ function CreateFeatureForm({ topic, onDone }: { topic: Topic; onDone: () => void
   const socket = useSocket();
   const [title, setTitle] = useState(topic.title);
   const [description, setDescription] = useState(topic.body);
-  return <form className="ml-8 space-y-2 rounded-md border border-dashed p-3" onSubmit={(e) => {
+  return <form className="ml-8 space-y-3 border-l border-border/60 pl-4" onSubmit={(e) => {
     e.preventDefault();
     if (socket.send("meeting.createFeature", { topicId: topic.id, featureId: uuidv7(), title, description })) onDone();
   }}>
