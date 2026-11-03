@@ -2,6 +2,8 @@
 
 Small multiplayer project-management app on Cloudflare Workers. Read [`CONTEXT.md`](CONTEXT.md) for domain terms, [`docs/spec.md`](docs/spec.md) for the v1 spec, [`docs/adr/`](docs/adr/) for decisions, and [`docs/tasks.md`](docs/tasks.md) for progress.
 
+For remaining v1 implementation or a handoff, start with [`docs/handoff.md`](docs/handoff.md) for the execution order, acceptance checks, and branch/PR baseline.
+
 ## Conventions
 
 - Never commit to `master`: pushes to it deploy to production. Work on a branch and open a PR.

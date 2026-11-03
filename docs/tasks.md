@@ -1,6 +1,6 @@
 # V1 tasks
 
-Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick boxes as work lands.
+Work breakdown for [`spec.md`](./spec.md), grouped by milestone (§11). A checked box means implemented in this branch's history, not necessarily merged or deployed. Start with [`handoff.md`](./handoff.md) for delivery status, execution order, and acceptance checks; recheck PR/CI state before starting work.
 
 ## M0: Deploy pipeline
 
@@ -49,7 +49,7 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [x] Router (TanStack), Zustand store fed by socket, Tailwind
 - [x] shadcn/ui (radix-nova, dark only; Sonner toasts; project switcher as a dropdown menu)
 - [x] Sync layer: socket with backoff, ping every 30 s, pending queue, optimistic apply, rollback + toast on reject, replay after reconnect
-- [x] Project-scoped navigation: inside a Project the top bar is a Project switcher plus Tasks / My Tasks tabs, Task pages live under the Project (`/w/:slug/p/:key/t/:n`, with `/w/:slug/t/WEB-12` redirecting), and the app reopens the last Project
+- [x] Project-scoped navigation: inside a Project the top bar is a Project switcher plus Tasks / My Tasks / Features / Meetings tabs, Task pages live under the Project (`/w/:slug/p/:key/t/:n`, with `/w/:slug/t/WEB-12` redirecting), and the app reopens the last Project
 - [x] Views: Workspace home (Project list), Project / Tasks (grouped by status, assignee filter, move up/down), Task detail (basic), My Tasks
 - [x] Drag to reorder with `@dnd-kit/sortable`: cards lift and the others slide aside (mouse anywhere on the card, keyboard from the grip); up/down buttons on touch screens
 - [ ] Mobile-first layout (bigger tap targets, sticky top bar, checked at 375 px; still needs a pass on a real phone)
@@ -64,8 +64,8 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 ## M2: Planning
 - [x] Features: `feature.create/update/setStatus`, `decided_by/at`, Features view, Feature detail, "Mark Feature done?" prompt
 - [x] Feature–Task linkage (same Project only; UI suggests accepted)
-- [ ] Comments: `comment.create/edit/delete` (author only), `comments.list` query, live changes applied only when loaded
-- [ ] Activity feed view (paged `activity.list`) and per-item Activity
+- [ ] Comments: `comment.create/edit/delete` (edit/delete author-only), `comments.list` query, live changes applied only when loaded
+- [ ] Activity feed view (paged `activity.list`) and per-item Activity; tuple cursors and durable Restore actions (spec §5)
 - [ ] Presence (viewing/editing) and "changed while you were editing" warning
 - [ ] Markdown fields: textarea + live preview, `react-markdown` without HTML, Task keys auto-linked
 - [ ] ⌘K quick-jump + `search` query (SQL `LIKE`), mobile search button
@@ -74,13 +74,17 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 
 ## M3: Meetings
 Topics and Meetings are per Project (a "Meetings" tab next to Tasks / My Tasks).
-- [x] Topics: `topic.create/update/move/delete` (author only, unresolved only), reorderable list, optional related Task
+- [x] Topics: `topic.create/update/move/delete` (deletion is author-only and unresolved-only), reorderable list, optional related Task
 - [x] Meetings: `meeting.start/setAttendees/recordOutcome/clearOutcome/close`, one open per Project, carry-over
 - [x] Meeting view: attendees, Outcome boxes, related Task status/assignee, "create Task" with assignee (`meeting.createTask` notes the key in the Outcome), Close with confirmation
 - [x] "Create Feature" from a Topic (creates a proposal and records its Outcome atomically)
 - [x] Past Meetings list and detail (from the snapshot; no `meeting.get` query needed)
 - [x] Projects list: Topics to discuss and "Meeting in progress"
 - [x] Tests: Topic rules, one open Meeting per Project, Outcomes only while open, carry-over, closed Meetings read-only, `meeting.createTask`
+
+## Delivery polish
+
+- [ ] Route-based code splitting: reduce the initial bundle and verify navigation/loading/error states (handoff step 9)
 
 ## M4: GitHub
 - [ ] `GITHUB_TOKEN_KEY` secret; AES-GCM encrypt/decrypt; `project.setGithubToken` (clears `fetch_error`s), `hasGithubToken`
