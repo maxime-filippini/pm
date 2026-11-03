@@ -1,3 +1,4 @@
+import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { Viewing } from "@/components/Presence";
 import { ConcurrentDraft } from "@/components/ConcurrentDraft";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
@@ -107,7 +108,9 @@ function NextMeeting({ slug, project }: { slug: string; project: Project }) {
         </Button>
       </header>
 
-      <section className="space-y-2">
+      <p className="text-sm leading-relaxed text-muted-foreground">Build the agenda between Meetings. Topics stay here until an Outcome records what you agreed.</p>
+      <section className="space-y-3 rounded-xl border p-4">
+        <SectionHeader title="Agenda" description="Add context, link related Tasks and put the most useful discussions first." />
         <SectionHeading count={agenda.length}>Topics</SectionHeading>
         {agenda.length === 0 ? (
           <p className="rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground">Nothing to discuss yet. Add a Topic below.</p>
@@ -241,7 +244,7 @@ function AddTopicForm({ project }: { project: Project }) {
       </div>
       {more && (
         <div className="space-y-2">
-          <MarkdownInput value={body} onChange={(e) => setBody(e.target.value)} placeholder="Context, links, what you want to decide…" className="min-h-20" />
+          <MarkdownInput aria-label="Topic body" maxLength={20_000} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Context, links, what you want to decide…" className="min-h-20" />
           <TaskPicker project={project} value={taskId} onChange={setTaskId} />
         </div>
       )}
@@ -264,7 +267,7 @@ function TopicEditor({ project, topic, onDone }: { project: Project; topic: Topi
     <ConcurrentDraft target={{ type: "topic", id: topic.id }} field="body" value={JSON.stringify([topic.title, topic.body, topic.refId])} draft={JSON.stringify([title, body, taskId || null])} onUseTheirs={() => { setTitle(topic.title); setBody(topic.body); setTaskId(topic.refId ?? ""); }}>
     <form onSubmit={save} className="min-w-0 flex-1 space-y-2" onMouseDown={(e) => e.stopPropagation()}>
       <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Topic title" onKeyDown={(e) => e.key === "Escape" && onDone()} />
-      <MarkdownInput value={body} onChange={(e) => setBody(e.target.value)} placeholder="Details" className="min-h-20" />
+      <MarkdownInput aria-label="Topic body" maxLength={20_000} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Details" className="min-h-20" />
       <TaskPicker project={project} value={taskId} onChange={setTaskId} />
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onDone}>Cancel</Button>
@@ -296,9 +299,11 @@ function MeetingInProgress({ slug, project, meeting }: { slug: string; project: 
         <p className="text-sm text-muted-foreground">
           Started {time(meeting.startedAt)}{starter && ` by ${starter.name}`} · {resolved} of {agenda.length} Topics discussed
         </p>
+        <SectionHeader title="Attendees" description="Select the Members taking part in this Meeting." />
         <Attendees meeting={meeting} />
       </header>
 
+      <SectionHeader title="Discuss the agenda" description="Record an Outcome for each Topic you discuss. Leave it blank to carry the Topic into the next Meeting." />
       {agenda.length === 0 && <Empty>No Topics on the agenda. Add one below.</Empty>}
       <ol className="space-y-3">
         {agenda.map((topic, i) => (
@@ -378,7 +383,7 @@ function DeleteMeetingDialog({ meeting, resolved, open, onOpenChange, onDeleted 
           <AlertDialogDescription>
             It disappears from the Project as if it never happened.
             {resolved > 0 && ` The ${resolved} Topic${resolved === 1 ? "" : "s"} discussed in it go back on the agenda.`}
-            {" "}Tasks and Features created during it are kept. You can undo right after.
+            {" "}Tasks and Features created during it are kept. You can undo right after, or restore it later from Workspace Activity.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -584,7 +589,8 @@ function PastMeetings({ slug, project }: { slug: string; project: Project }) {
   if (past.length === 0) return null;
   return (
     <section className="space-y-2">
-      <SectionHeading count={past.length}>Past Meetings</SectionHeading>
+      <SectionHeader title="Past Meetings" description="Revisit who attended and what was agreed in completed Meetings." />
+      <SectionHeading count={past.length}>Meeting records</SectionHeading>
       <ul className="flex flex-col gap-1.5">
         {past.map((m) => (
           <li key={m.id}>
@@ -628,8 +634,9 @@ export function PastMeetingPage() {
         <span className="flex-1" />
         <MeetingActions meeting={meeting} resolved={topics.length} onDeleted={() => navigate({ to: "/w/$slug/p/$key/meetings", params: { slug, key } })} />
       </div>
+      <PageHeader title="Meeting record" description="The attendees, Topics and Outcomes from this Meeting. Closed Meeting records are read-only; deleting one returns its Topics to the agenda." />
       <header className="space-y-1">
-        <h1 className="font-heading text-xl font-semibold">{date(meeting.startedAt)}</h1>
+        <h2 className="font-heading text-xl font-semibold">{date(meeting.startedAt)}</h2>
         <p className="text-sm text-muted-foreground">
           {time(meeting.startedAt)}
           {meeting.endedAt && `–${time(meeting.endedAt)}`}

@@ -18,8 +18,8 @@ export function ProjectSettingsPage() {
     <PageHeader title="Project settings" description="Manage the Project name, visibility and GitHub access. These settings apply to everyone in the Workspace." />
     <section className="space-y-3 rounded-xl border p-4">
       <SectionHeader title="Project identity" description={`Task keys begin with ${project.key}. The key is permanent; the name can change.`} />
-      <label className="block text-sm">Project name</label>
-      <EditableText field="name" value={project.name} onSave={(name) => socket.send("project.rename", { id: project.id, name })} render={(props) => <Input {...props} aria-label="Project name" maxLength={100} />} />
+      <label htmlFor="project-name" className="block text-sm">Project name</label>
+      <EditableText field="name" value={project.name} onSave={(name) => socket.send("project.rename", { id: project.id, name })} render={(props) => <Input {...props} id="project-name" aria-label="Project name" maxLength={100} />} />
     </section>
     <section className="space-y-3 rounded-xl border p-4">
       <SectionHeader title="GitHub access" description="A token lets PM read the states of Pull Requests you link to Tasks. It never changes anything on GitHub." />

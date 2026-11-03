@@ -1,3 +1,4 @@
+import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { Viewing } from "@/components/Presence";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
 import { ActivityFeed } from "@/components/ActivityFeed";
@@ -49,11 +50,11 @@ export function FeaturesPage() {
     </Card>;
   });
   return <div className="space-y-5">
-    <h1 className="font-heading text-xl font-semibold">Features</h1>
-    {project.archivedAt === null && <form className="flex gap-2" onSubmit={(e) => {
+    <PageHeader title={project.name + ": Features"} description="Propose what to build, discuss it together, then accept or reject it. Accepted Features can be broken into Tasks; completion is always a Member’s choice." />
+    {project.archivedAt === null && <section className="space-y-3 rounded-xl border p-4"><SectionHeader title="Propose a Feature" description="Start with a short title. Add context and discuss the proposal on its detail page." /><form className="flex gap-2" onSubmit={(e) => {
       e.preventDefault();
       if (socket.send("feature.create", { id: uuidv7(), projectId: project.id, title })) setTitle("");
-    }}><Input value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} aria-label="Feature title" placeholder="Propose a Feature" /><Button disabled={!title.trim()}>Propose</Button></form>}
+    }}><Input value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} aria-label="Feature title" placeholder="Propose a Feature" /><Button disabled={!title.trim()}>Propose</Button></form></section>}
     {(["proposed", "accepted"] as const).map((status) => <section key={status} className="space-y-2"><h2 className="font-semibold">{FEATURE_LABEL[status]} ({group(status).length})</h2>{group(status).length ? rows(status) : <Empty>No {status} Features.</Empty>}</section>)}
     {(["done", "rejected"] as const).map((status) => <details key={status} className="space-y-2"><summary className="cursor-pointer py-2 font-semibold">{FEATURE_LABEL[status]} ({group(status).length})</summary>{rows(status)}</details>)}
   </div>;
@@ -71,6 +72,7 @@ export function FeaturePage() {
   if (!project || !feature || feature.projectId !== project.id) return <Empty>Feature not found.</Empty>;
   const linked = Object.values(tasks).filter((t) => t.featureId === feature.id).sort(byRank);
   return <Viewing target={{ type: "feature", id: feature.id }}><div className="space-y-5">
+    <PageHeader title="Feature proposal" description="Describe the intended change, agree on its status, and use linked Tasks to organize delivery." />
     <Link to="/w/$slug/p/$key/features" params={{ slug, key }} className="text-sm text-muted-foreground hover:underline">← Features</Link>
     <EditableText value={feature.title} onSave={(title) => socket.send("feature.update", { id: feature.id, title })} render={(p) => <Input {...p} aria-label="Feature title" className="font-heading text-lg font-semibold" />} />
     <label className="flex flex-wrap items-center gap-2 text-sm">Status
@@ -80,8 +82,8 @@ export function FeaturePage() {
     </label>
     {feature.decidedBy && feature.decidedAt !== null && <p className="text-xs text-muted-foreground">Last decision by {members[feature.decidedBy]?.name ?? "someone"} on {new Date(feature.decidedAt).toLocaleString()}</p>}
     <FeatureDonePrompt feature={feature} />
-    <Card className="gap-2 px-4"><h2 className="font-semibold">Description</h2><EditableText field="description" value={feature.description} multiline onSave={(description) => socket.send("feature.update", { id: feature.id, description })} render={(p) => <MarkdownInput {...p} aria-label="Feature description" placeholder="Describe the proposal…" className="min-h-32" />} /></Card>
-    <section className="space-y-3"><h2 className="font-semibold">Tasks ({linked.length})</h2>
+    <Card className="gap-2 px-4"><SectionHeader title="Description" description="Explain the problem, desired behavior and any limits on the proposal." /><EditableText field="description" value={feature.description} multiline onSave={(description) => socket.send("feature.update", { id: feature.id, description })} render={(p) => <MarkdownInput {...p} aria-label="Feature description" placeholder="Describe the proposal…" className="min-h-32" />} /></Card>
+    <section className="space-y-3"><SectionHeader title={`Tasks (${linked.length})`} description="Break the Feature into concrete work. Task progress informs the discussion but never completes the Feature automatically." />
       {project.archivedAt === null && <form className="space-y-2" onSubmit={(e) => {
         e.preventDefault();
         if (socket.send("task.create", { id: uuidv7(), projectId: project.id, featureId: feature.id, title, assigneeId: assigneeId || null })) setTitle("");

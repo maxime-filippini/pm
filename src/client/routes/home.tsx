@@ -1,3 +1,4 @@
+import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { Link, Navigate } from "@tanstack/react-router";
 import { useMe } from "../api";
 import { Empty } from "@/components/common";
@@ -15,8 +16,10 @@ export function HomePage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      <PageHeader title="Your Workspaces" description="Open a Workspace to see the Projects you share with its Members." />
       <p className="text-sm text-muted-foreground">Signed in as {me.email}</p>
+      <SectionHeader title="Workspaces" />
       {me.workspaces.length === 0 ? (
         <Empty>You have not been invited to a Workspace yet.</Empty>
       ) : (

@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Empty, SectionHeading, ShowClosedToggle } from "@/components/common";
@@ -25,6 +26,7 @@ export function MyTasksPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader title="My Tasks across Projects" description="Your assigned work in every active Project, grouped by Project. Done and canceled Tasks are hidden unless you choose to show them." />
       <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
       {byProject.length === 0 && <Empty>Nothing assigned to you.</Empty>}
       {byProject.map(({ project, tasks }) => (
