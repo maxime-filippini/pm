@@ -1,0 +1,3 @@
+# Pull Request links are manual, one-way, and polled
+
+A Member pastes PR URLs onto a Task. The app never parses Task keys out of PRs, and it doesn't receive GitHub webhooks. When a Task with Pull Request links is viewed, the DO refreshes each PR's state (Draft, Open, Merged, Closed) through the GitHub REST API if the cached value is older than about a minute, then broadcasts the change. We chose this to keep GitHub integration very light: no GitHub App, no webhook routing, no repo-to-Workspace mapping. Auto-linking by Task key and webhooks were considered and deliberately dropped; status that is up to a minute stale is acceptable.
