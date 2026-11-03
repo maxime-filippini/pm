@@ -1,3 +1,4 @@
+import { ActivityFeed } from "@/components/ActivityFeed";
 import { Comments } from "@/components/Comments";
 import { Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
@@ -90,5 +91,6 @@ export function FeaturePage() {
       <TaskList>{linked.map((t) => <TaskCard key={t.id} slug={slug} project={project} task={t} />)}</TaskList>
     </section>
     <Comments key={feature.id} target={{ type: "feature", id: feature.id }} />
+      <ActivityFeed key={"activity-" + feature.id} target={{ type: "feature", id: feature.id }} />
   </div>;
 }

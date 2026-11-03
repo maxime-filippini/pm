@@ -30,6 +30,7 @@ type State = {
   view: Data;
   /** Loaded on demand (activity.list); live changes are applied only once loaded. */
   activity: Activity[] | null;
+  lastActivity: Activity[];
   commentCollections: Record<string, CommentCollection>;
   comments: Record<string, Comment[]>;
   connectionEpoch: number;
@@ -55,6 +56,7 @@ export const useWorkspace = create<State>(() => ({
   pending: [],
   view: empty,
   activity: null,
+  lastActivity: [],
   commentCollections: {}, comments: {}, connectionEpoch: 0,
 }));
 
@@ -66,7 +68,7 @@ const set = (patch: Partial<State> | ((s: State) => Partial<State>)) =>
 
 export const workspaceActions = {
   reset() {
-    useWorkspace.setState({ status: "connecting", memberId: null, version: 0, confirmed: empty, pending: [], view: empty, activity: null, commentCollections: {}, comments: {}, connectionEpoch: 0 });
+    useWorkspace.setState({ status: "connecting", memberId: null, version: 0, confirmed: empty, pending: [], view: empty, activity: null, lastActivity: [], commentCollections: {}, comments: {}, connectionEpoch: 0 });
   },
   setStatus(status: ConnectionStatus) {
     useWorkspace.setState({ status });
@@ -80,6 +82,7 @@ export const workspaceActions = {
       memberId,
       status: "online",
       activity: null,
+      lastActivity: [],
       confirmed: {
         members: byId(data.members),
         projects: byId(data.projects),
@@ -110,7 +113,7 @@ export const workspaceActions = {
         else table[c.row.id] = c.row;
         (confirmed as Record<string, unknown>)[`${c.entity}s`] = table;
       }
-      return { version, confirmed, activity, commentCollections };
+      return { version, confirmed, activity, commentCollections, lastActivity: changes.flatMap((c) => c.entity === "activity" && c.op === "upsert" ? [c.row] : []) };
     });
   },
   addPending(p: Pending) {

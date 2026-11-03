@@ -65,7 +65,7 @@ Work breakdown for [`spec.md`](./spec.md), grouped by milestone (§11). A checke
 - [x] Features: `feature.create/update/setStatus`, `decided_by/at`, Features view, Feature detail, "Mark Feature done?" prompt
 - [x] Feature–Task linkage (same Project only; UI suggests accepted)
 - [x] Comments: `comment.create/edit/delete` (edit/delete author-only), `comments.list` query, live changes applied only when loaded
-- [ ] Activity feed view (paged `activity.list`) and per-item Activity; tuple cursors and durable Restore actions (spec §5)
+- [x] Activity feed view (paged `activity.list`) and per-item Activity; tuple cursors and durable Restore actions (spec §5)
 - [ ] Presence (viewing/editing) and "changed while you were editing" warning
 - [ ] Markdown fields: textarea + live preview, `react-markdown` without HTML, Task keys auto-linked
 - [ ] ⌘K quick-jump + `search` query (SQL `LIKE`), mobile search button
