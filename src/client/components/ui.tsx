@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import type { TaskStatus } from "../../shared/entities";
 
-const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(" ");
+export const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(" ");
 
 export function Button({ variant = "default", className, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "default" | "primary" | "ghost" }) {
   return (

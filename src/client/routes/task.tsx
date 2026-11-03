@@ -1,16 +1,26 @@
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, Navigate, useCanGoBack, useParams, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TASK_STATUSES, type TaskStatus } from "../../shared/entities";
 import { Card, Empty, Input, Select, STATUS_LABEL, Textarea } from "../components/ui";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
 
-export function TaskPage() {
+/** /w/$slug/t/WEB-12 → /w/$slug/p/WEB/t/12 */
+export function TaskKeyRedirect() {
   const { slug, taskKey } = useParams({ from: "/w/$slug/t/$taskKey" });
+  const i = taskKey.lastIndexOf("-");
+  if (i <= 0) return <Empty>No Task {taskKey}.</Empty>;
+  return <Navigate to="/w/$slug/p/$key/t/$number" params={{ slug, key: taskKey.slice(0, i), number: taskKey.slice(i + 1) }} replace />;
+}
+
+export function TaskPage() {
+  const { slug, key: projectKey, number } = useParams({ from: "/w/$slug/p/$key/t/$number" });
   const socket = useSocket();
-  const [projectKey, numberStr] = splitKey(taskKey);
+  const router = useRouter();
+  const canGoBack = useCanGoBack();
+  const taskKey = `${projectKey}-${number}`;
   const project = useWorkspace((s) => Object.values(s.view.projects).find((p) => p.key === projectKey));
-  const task = useWorkspace((s) => (project ? Object.values(s.view.tasks).find((t) => t.projectId === project.id && t.number === Number(numberStr)) : undefined));
+  const task = useWorkspace((s) => (project ? Object.values(s.view.tasks).find((t) => t.projectId === project.id && t.number === Number(number)) : undefined));
   const members = useWorkspace((s) => s.view.members);
 
   if (!project || !task) return <Empty>No Task {taskKey}.</Empty>;
@@ -20,9 +30,13 @@ export function TaskPage() {
 
   return (
     <div className="space-y-5">
-      <div className="text-sm text-neutral-500">
-        <Link to="/w/$slug/p/$key" params={{ slug, key: project.key }} className="hover:underline">{project.name}</Link>
-        <span className="mx-2">/</span>
+      <div className="flex items-center gap-2 text-sm text-neutral-500">
+        {/* Back returns to the list you came from (Tasks or My Tasks); a fresh tab falls back to Tasks. */}
+        {canGoBack ? (
+          <button type="button" onClick={() => router.history.back()} className="-ml-2 rounded-md px-2 py-1 hover:bg-neutral-800 hover:text-neutral-100">← Back</button>
+        ) : (
+          <Link to="/w/$slug/p/$key" params={{ slug, key: project.key }} className="-ml-2 rounded-md px-2 py-1 hover:bg-neutral-800 hover:text-neutral-100">← Tasks</Link>
+        )}
         <span className="font-mono">{taskKey}</span>
       </div>
 
@@ -64,11 +78,6 @@ export function TaskPage() {
       </p>
     </div>
   );
-}
-
-function splitKey(key: string): [string, string] {
-  const i = key.lastIndexOf("-");
-  return [key.slice(0, i), key.slice(i + 1)];
 }
 
 type FieldProps = {
