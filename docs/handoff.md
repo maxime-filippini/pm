@@ -1,8 +1,39 @@
 # Implementation handoff
 
-Status recorded 2026-11-03. Start here when continuing v1 work. [`spec.md`](./spec.md) defines behavior and query contracts; [`tasks.md`](./tasks.md) tracks implementation; [`../CONTEXT.md`](../CONTEXT.md) defines domain terms. Architecture constraints live in [`adr/`](./adr/).
+Status recorded 2026-11-03. Start here when reviewing the v1 implementation stack or continuing verification. [`spec.md`](./spec.md) defines behavior and query contracts; [`tasks.md`](./tasks.md) tracks implementation; [`../CONTEXT.md`](../CONTEXT.md) defines domain terms. Architecture constraints live in [`adr/`](./adr/).
 
-## Where the code stands
+## Current review stack
+
+All remaining v1 code features have been implemented in the stack below, including the additional page headings, explanatory text and section boundaries. Review from the bottom up; every PR targets the preceding branch. None of these PRs was merged by the agent.
+
+| Review order | PR | Branch | Base | Change |
+|---|---|---|---|---|
+| 1 | [#12](https://github.com/maxime-filippini/pm/pull/12) | `feat/comments` | `master` | Task and Feature Comments |
+| 2 | [#13](https://github.com/maxime-filippini/pm/pull/13) | `feat/activity` | `feat/comments` | Activity, tuple pagination, lasting Restore |
+| 3 | [#14](https://github.com/maxime-filippini/pm/pull/14) | `feat/markdown` | `feat/activity` | Safe Markdown and live preview |
+| 4 | [#15](https://github.com/maxime-filippini/pm/pull/15) | `feat/presence` | `feat/markdown` | Presence and concurrent draft protection |
+| 5 | [#16](https://github.com/maxime-filippini/pm/pull/16) | `feat/search` | `feat/presence` | Workspace search and quick-jump |
+| 6 | [#17](https://github.com/maxime-filippini/pm/pull/17) | `feat/install-export` | `feat/search` | Installation assets and authenticated export |
+| 7 | [#18](https://github.com/maxime-filippini/pm/pull/18) | `feat/github` | `feat/install-export` | GitHub integration and Project settings |
+| 8 | [#19](https://github.com/maxime-filippini/pm/pull/19) | `style/page-sections` | `feat/github` | Page explanations and sections |
+| 9 | [#20](https://github.com/maxime-filippini/pm/pull/20) | `perf/route-splitting` | `style/page-sections` | Lazy routes and bundle reduction |
+| 10 | [#21](https://github.com/maxime-filippini/pm/pull/21) | `fix/sync-polish` | `perf/route-splitting` | Final sync races, deduplication and readable history |
+
+Final local verification: **70 tests passed**, typecheck, production build, convention and diff checks passed. Browser checks covered Comments, Restore after leaving/reopening Activity, Markdown preview, two-tab concurrent drafts, search keyboard controls, installation assets/export, PR link/unlink and no-token states, settings, named sections and 375 px layouts. GitHub states/errors and token privacy were tested with mocks, not a real credential.
+
+Production-build network checks confirmed unopened route code is deferred. First Home JavaScript fell from about **825 KB to 391 KB** including shared dependencies; see [bundle-size.md](./bundle-size.md) for exact measurements and loading/error recovery checks. This is not a Core Web Vitals score.
+
+At the final CI inspection, PRs #12–#20 had successful check and preview-deploy jobs. #21 was newly pushed; recheck its latest SHA before merging. The shared preview always serves the last deployed branch; individual PR success does not mean that layer is currently served. No production deployment of this stack has been claimed.
+
+### Remaining operational and device checks
+
+- **Private GitHub encryption key**: provision `GITHUB_TOKEN_KEY` separately for preview and production through the private secret mechanism, then a Member can configure a real Project token in settings. No real key or token was provisioned here; see [github.md](./github.md).
+- **Real phone**: native selects, taps, text entry, scrolling, sticky navigation, reorder buttons and installation still need an actual device. Resizing to 375 px does not complete this.
+- **Idle cost**: two authenticated tabs must sit idle for a recorded 30–60 minute interval, followed by DO duration/request metrics for that interval. Local test sockets and no-timer tests do not establish production idle cost.
+- **Preview Access** is now verified: on 2026-11-03 an unauthenticated browser visit to `pm-preview.maximefilippini.me` redirected to this hostname’s Cloudflare Access sign-in page. No dashboard policy edit was needed.
+- Review/merge the stack in order, and inspect the resulting production deployment separately. Export is documented in [export.md](./export.md); it is not an import/restore tool.
+
+## Merged foundation (historical baseline)
 
 Foundation, project-scoped navigation, shadcn/ui, task reordering, per-Project Meetings, Task/Meeting soft deletion with Undo, Features, Feature–Task linkage, and creating Features from meeting Topics are implemented. M3 is implemented ahead of the remaining M2 work.
 
@@ -16,23 +47,15 @@ These PRs were **merged into `master`** on 2026-11-03 (in the order below). Thei
 | 4 | [#8](https://github.com/maxime-filippini/pm/pull/8) | `feat/soft-delete` | `feat/meetings` | Soft deletion and Undo |
 | 5 | [#9](https://github.com/maxime-filippini/pm/pull/9) | `feat/features` | `feat/soft-delete` | Features and meeting proposals |
 
-Current merged baseline: `23dd978` on `master` (merge of #9). This documentation branch is based on that commit and contains only documentation changes. Inspect `git status`, `git log`, and current PR/check state before selecting a base; start new implementation branches from updated `master` or a deliberate newer stack parent.
+The merged implementation baseline was `23dd978` (merge of #9); the new stack starts from `1c18e1b`, which also includes the merged handoff documentation. Inspect `git status`, `git log`, and current PR/check state before selecting a base; start new implementation branches from updated `master` or a deliberate newer stack parent.
 
-At the last check, the [CI/deployment run for the merged baseline](https://github.com/maxime-filippini/pm/actions/runs/41625671547) was still in progress. **Merged does not yet establish successful production deployment**; inspect the deploy job before claiming it is live.
+The [master CI/deployment run for `1c18e1b`](https://github.com/maxime-filippini/pm/actions/runs/41626485920) completed successfully. This establishes the foundation deployment only, not deployment of the open implementation stack.
 
-Last implementation verification: 47 tests passed, typecheck/build/convention checks passed, and browser flows covered Features, linked Tasks, manual Feature completion, and meeting-created proposals at desktop and 375 px widths. This is a recorded baseline, not the current CI result. The production build still reports a large client bundle (about 672 KB uncompressed / 209 KB gzip). Local dev data includes explicitly named demo Features/Tasks and a closed demo Meeting from browser checks; it is not a clean fixture.
-
-## Comments implementation (current branch)
-
-Step 1 is implemented in [PR #12](https://github.com/maxime-filippini/pm/pull/12) on `feat/comments`: author-only edit/delete, target validation, tuple pagination, Activity attribution, optimistic rollback, loaded-target state, query/live race reconciliation, and reconnect reloads. The existing Comments table is reused. This work is separate from the merged baseline above; it is not merged or deployed to production.
-
-Validation: 55 passing runtime and client-store tests; typecheck, full tests, build, convention and diff checks; local browser post/edit/delete on both detail pages, cross-tab edits/deletes, and 375 px layouts without horizontal overflow. Browser check Comments were deleted afterward. The initial bundle remains about 678 KB / 211 KB gzip; step 9 is still pending.
-
-Next implementation step: **2. Activity and lasting Restore actions**. Markdown remains step 3.
+Historical foundation verification: 47 tests passed, typecheck/build/convention checks passed, and browser flows covered Features, linked Tasks, manual Feature completion, and meeting-created proposals at desktop and 375 px widths. This is a recorded baseline, not the current CI result. The production build still reports a large client bundle (about 672 KB uncompressed / 209 KB gzip). Local dev data includes explicitly named demo Features/Tasks and a closed demo Meeting from browser checks; it is not a clean fixture.
 
 ## Execution order and acceptance checks
 
-Keep one reviewable PR per step, following the existing branch/commit conventions in [`../CLAUDE.md`](../CLAUDE.md). Steps 1–3 are the immediate next work. Follow the contracts in spec §5; their new query shapes are planned and still need implementation.
+Keep one reviewable PR per step, following the existing branch/commit conventions in [`../CLAUDE.md`](../CLAUDE.md). Steps 1–7 and 9 are implemented in the open review stack above. Step 8 retains the manual checks described above. The acceptance criteria below remain the review checklist; spec §5 defines the implemented query contracts.
 
 ### 1. Comments on Tasks and Features
 
