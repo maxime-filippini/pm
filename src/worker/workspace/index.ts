@@ -1,3 +1,4 @@
+import { exportWorkspace } from "./export";
 import { ZodError } from "zod";
 import { DurableObject } from "cloudflare:workers";
 import { parseCommand } from "../../shared/commands";
@@ -154,6 +155,8 @@ export class WorkspaceDO extends DurableObject<Env> {
       } });
     }
   }
+
+  exportData() { return exportWorkspace(this.sql); }
 
   // ---- Membership mirror (RPC from the Worker's admin endpoints) ----
 

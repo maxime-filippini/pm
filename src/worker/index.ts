@@ -43,6 +43,18 @@ app.get("/me", async (c) => {
   return c.json({ email, member, workspaces, isAdmin: isAdmin(c.env, email) });
 });
 
+// A download is scoped through the same registry membership check as sockets.
+app.get("/w/:slug/export", async (c) => {
+  const member = c.get("member");
+  if (!member) return c.json({ error: "Not invited" }, 403);
+  const workspace = await workspaceForMember(c.env.DB, c.req.param("slug"), member.id);
+  if (!workspace) return c.json({ error: "Not a member of this Workspace" }, 403);
+  const data = await c.env.WORKSPACE.getByName(workspace.id).exportData();
+  c.header("Cache-Control", "no-store");
+  c.header("Content-Disposition", `attachment; filename="pm-${workspace.slug}-${new Date(data.exportedAt).toISOString().slice(0, 10)}.json"`);
+  return c.json({ ...data, workspace: { id: workspace.id, slug: workspace.slug, name: workspace.name } });
+});
+
 // ---- Workspace socket ----
 
 app.get("/w/:slug/ws", async (c) => {

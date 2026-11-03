@@ -1,4 +1,4 @@
-import { createExecutionContext, env, SELF, waitOnExecutionContext } from "cloudflare:test";
+import { createExecutionContext, env, runInDurableObject, SELF, waitOnExecutionContext } from "cloudflare:test";
 import { beforeAll, describe, expect, it } from "vitest";
 import worker from "../src/worker/index";
 
@@ -35,6 +35,27 @@ describe("worker", () => {
         method: "POST",
         body: JSON.stringify({ email: "member@example.com", name: "Member" }),
       });
+    });
+
+    it("authenticates export, checks membership and omits encrypted tokens while retaining deleted data", async () => {
+      expect((await SELF.fetch("https://pm.test/api/w/team/export")).status).toBe(401);
+      expect((await call("/api/w/team/export", "stranger@example.com")).status).toBe(403);
+      expect((await call("/api/w/team/export", ADMIN)).status).toBe(403);
+      await runInDurableObject(env.WORKSPACE.getByName(workspaceId), (_, state) => {
+        state.storage.sql.exec("INSERT INTO projects (id, key, name, github_token_enc, created_at, created_by) VALUES ('export-project', 'EXP', 'Export', 'encrypted-test-fixture', 1, 'actor')");
+        state.storage.sql.exec("INSERT INTO tasks (id, project_id, number, title, status, rank, created_by, created_at, updated_at, deleted_at) VALUES ('export-task', 'export-project', 1, 'Deleted', 'todo', 'a0', 'actor', 1, 1, 2)");
+      });
+      const response = await call("/api/w/team/export", "member@example.com");
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(response.headers.get("Content-Disposition")).toContain("attachment");
+      const data = await response.json() as { formatVersion: number; tables: Record<string, Record<string, unknown>[]> };
+      expect(data.formatVersion).toBe(1);
+      expect(Object.keys(data.tables).some((name) => name.startsWith("__"))).toBe(false);
+      expect(data.tables.tasks).toContainEqual(expect.objectContaining({ id: "export-task", deleted_at: 2 }));
+      expect(Object.keys(data.tables)).toEqual(expect.arrayContaining(["_schema", "meta", "comments", "activity", "meetings", "meeting_attendees"]));
+      expect(JSON.stringify(data)).not.toContain("encrypted-test-fixture");
+      expect(JSON.stringify(data)).not.toContain("github_token_enc");
     });
 
     it("forbids admin routes to non-admins", async () => {
