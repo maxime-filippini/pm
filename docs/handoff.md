@@ -6,7 +6,7 @@ Status recorded 2026-11-03. Start here when continuing v1 work. [`spec.md`](./sp
 
 Foundation, project-scoped navigation, shadcn/ui, task reordering, per-Project Meetings, Task/Meeting soft deletion with Undo, Features, Feature–Task linkage, and creating Features from meeting Topics are implemented. M3 is implemented ahead of the remaining M2 work.
 
-These PRs were **open**, not merged, when this handoff was written:
+These PRs were **merged into `master`** on 2026-11-03 (in the order below). Their feature branches have been removed; continue from updated `master`:
 
 | Order | PR | Branch | Base | Change |
 |---|---|---|---|---|
@@ -16,7 +16,9 @@ These PRs were **open**, not merged, when this handoff was written:
 | 4 | [#8](https://github.com/maxime-filippini/pm/pull/8) | `feat/soft-delete` | `feat/meetings` | Soft deletion and Undo |
 | 5 | [#9](https://github.com/maxime-filippini/pm/pull/9) | `feat/features` | `feat/soft-delete` | Features and meeting proposals |
 
-Implementation baseline: commit `8d5b9d7` on `feat/features`. This handoff's documentation branch starts there. Inspect `git status`, `git log`, and current PR/check state before selecting a base; use the latest descendant containing this handoff, or updated `master` after the stack merges. Starting from the pre-stack `master` omits the implemented features. Merge order is bottom to top; rebasing/retargeting descendants may be needed after squash merges. A handoff is not authorization to merge the stack.
+Current merged baseline: `23dd978` on `master` (merge of #9). This documentation branch is based on that commit and contains only documentation changes. Inspect `git status`, `git log`, and current PR/check state before selecting a base; start new implementation branches from updated `master` or a deliberate newer stack parent.
+
+At the last check, the [CI/deployment run for the merged baseline](https://github.com/maxime-filippini/pm/actions/runs/41625671547) was still in progress. **Merged does not yet establish successful production deployment**; inspect the deploy job before claiming it is live.
 
 Last implementation verification: 47 tests passed, typecheck/build/convention checks passed, and browser flows covered Features, linked Tasks, manual Feature completion, and meeting-created proposals at desktop and 375 px widths. This is a recorded baseline, not the current CI result. The production build still reports a large client bundle (about 672 KB uncompressed / 209 KB gzip). Local dev data includes explicitly named demo Features/Tasks and a closed demo Meeting from browser checks; it is not a clean fixture.
 
