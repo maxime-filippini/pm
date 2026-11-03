@@ -69,8 +69,8 @@ Work breakdown for [`spec.md`](./spec.md), grouped by milestone (§11). A checke
 - [x] Presence (viewing/editing) and "changed while you were editing" warning
 - [x] Markdown fields: textarea + live preview, `react-markdown` without HTML, Task keys auto-linked
 - [x] ⌘K quick-jump + `search` query (SQL `LIKE`), mobile search button
-- [ ] `manifest.webmanifest` + icons, `display: standalone`
-- [ ] `GET /api/w/:slug/export`
+- [x] `manifest.webmanifest` + icons, `display: standalone`
+- [x] `GET /api/w/:slug/export`
 
 ## M3: Meetings
 Topics and Meetings are per Project (a "Meetings" tab next to Tasks / My Tasks).

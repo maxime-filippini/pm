@@ -1,3 +1,4 @@
+import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { Link, useParams } from "@tanstack/react-router";
 import { ChevronRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -42,6 +43,8 @@ export function ProjectsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHeader title="Projects" description="Choose a Project to plan Features, organize Tasks and prepare your next Meeting." />
+      <SectionHeader title="Your Projects" description="Each Project keeps its own Tasks, Features and Meetings." />
       {list.length === 0 ? (
         <Empty>No Projects yet.</Empty>
       ) : (
@@ -74,6 +77,7 @@ export function ProjectsPage() {
         </ul>
       )}
 
+      <SectionHeader title="Create a Project" description="Choose a short, permanent key for Task identifiers, such as WEB-12." />
       <form onSubmit={create} className="flex flex-wrap gap-2">
         <Input value={key} onChange={(e) => setKey(e.target.value.toUpperCase())} placeholder="KEY" maxLength={6} aria-label="Project key" className="h-9 w-24 font-mono" />
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New Project name" aria-label="Project name" className="h-9 min-w-40 flex-1" />
@@ -84,6 +88,11 @@ export function ProjectsPage() {
         <Checkbox checked={showArchived} onCheckedChange={(v) => setShowArchived(v === true)} />
         Show archived Projects
       </Label>
+      <section className="space-y-3 border-t pt-5">
+        <SectionHeader title="Workspace data" description="Download all Project data, including retained deleted records, as JSON. GitHub tokens are excluded." />
+        <Button variant="outline" asChild><a href={`/api/w/${encodeURIComponent(slug)}/export`} download>Export Workspace</a></Button>
+        <p className="text-xs text-muted-foreground">You can install PM from your browser’s app menu or Add to Home Screen. An internet connection is required.</p>
+      </section>
     </div>
   );
 }
