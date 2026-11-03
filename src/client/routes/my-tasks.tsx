@@ -1,7 +1,7 @@
 import { useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { TaskRow } from "../components/TaskRow";
-import { Card, Empty } from "../components/ui";
+import { Empty, SectionHeading, ShowClosedToggle } from "@/components/common";
+import { TaskCard, TaskList } from "@/components/TaskCard";
 import { useWorkspace } from "../store/workspace";
 import { byRank } from "../../shared/rank";
 
@@ -25,19 +25,14 @@ export function MyTasksPage() {
 
   return (
     <div className="space-y-5">
-      <label className="flex items-center gap-2 text-sm text-neutral-400">
-        <input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} />
-        Show done and canceled
-      </label>
+      <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
       {byProject.length === 0 && <Empty>Nothing assigned to you.</Empty>}
       {byProject.map(({ project, tasks }) => (
         <section key={project.id} className="space-y-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{project.name}</h2>
-          <Card>
-            <ul className="divide-y divide-neutral-800">
-              {tasks.map((t) => <TaskRow key={t.id} slug={slug} task={t} project={project} />)}
-            </ul>
-          </Card>
+          <SectionHeading count={tasks.length}>{project.name}</SectionHeading>
+          <TaskList>
+            {tasks.map((t) => <TaskCard key={t.id} slug={slug} task={t} project={project} />)}
+          </TaskList>
         </section>
       ))}
     </div>

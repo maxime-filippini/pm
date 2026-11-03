@@ -1,11 +1,11 @@
 import { Link, Navigate } from "@tanstack/react-router";
 import { useMe } from "../api";
-import { Card, Empty } from "../components/ui";
+import { Empty } from "@/components/common";
 import { getLastProject } from "../last-project";
 
 export function HomePage() {
   const { me, error } = useMe();
-  if (error) return <p className="text-red-400">{error}</p>;
+  if (error) return <p className="text-destructive">{error}</p>;
   if (!me) return <Empty>Loading…</Empty>;
   if (me.workspaces.length === 1 && !me.isAdmin) {
     const slug = me.workspaces[0]!.slug;
@@ -16,22 +16,20 @@ export function HomePage() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-neutral-400">Signed in as {me.email}</p>
+      <p className="text-sm text-muted-foreground">Signed in as {me.email}</p>
       {me.workspaces.length === 0 ? (
         <Empty>You have not been invited to a Workspace yet.</Empty>
       ) : (
-        <Card>
-          <ul className="divide-y divide-neutral-800">
+        <ul className="flex flex-col gap-1.5">
             {me.workspaces.map((w) => (
               <li key={w.id}>
                 <WorkspaceLink slug={w.slug} name={w.name} />
               </li>
             ))}
-          </ul>
-        </Card>
+        </ul>
       )}
       {me.isAdmin && (
-        <Link to="/admin" className="inline-block text-sm text-indigo-400 hover:underline">
+        <Link to="/admin" className="inline-block text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
           Admin: Workspaces and Members →
         </Link>
       )}
@@ -42,7 +40,7 @@ export function HomePage() {
 /** Opens the Project you last worked in, or the Project list the first time. */
 function WorkspaceLink({ slug, name }: { slug: string; name: string }) {
   const key = getLastProject(slug);
-  const className = "block px-4 py-3 hover:bg-neutral-800/50";
+  const className = "block rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:bg-muted";
   return key ? (
     <Link to="/w/$slug/p/$key" params={{ slug, key }} className={className}>{name}</Link>
   ) : (

@@ -1,7 +1,7 @@
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider, useParams } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { Toasts } from "./components/Toasts";
+import { Toaster } from "@/components/ui/sonner";
 import "./index.css";
 import { AdminPage } from "./routes/admin";
 import { HomePage } from "./routes/home";
@@ -16,7 +16,7 @@ const rootRoute = createRootRoute({
     <div className="mx-auto max-w-3xl px-3 pt-3 pb-24 sm:px-4 sm:pt-4">
       <AppHeader />
       <Outlet />
-      <Toasts />
+      <Toaster position="bottom-center" />
     </div>
   ),
 });
@@ -27,7 +27,7 @@ function AppHeader() {
   if (slug) return null;
   return (
     <header className="mb-4">
-      <Link to="/" className="text-lg font-semibold">PM</Link>
+      <Link to="/" className="font-heading text-lg font-semibold">PM</Link>
     </header>
   );
 }
