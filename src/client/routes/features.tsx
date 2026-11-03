@@ -1,3 +1,4 @@
+import { Viewing } from "@/components/Presence";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { Comments } from "@/components/Comments";
@@ -69,7 +70,7 @@ export function FeaturePage() {
   const [assigneeId, setAssigneeId] = useState("");
   if (!project || !feature || feature.projectId !== project.id) return <Empty>Feature not found.</Empty>;
   const linked = Object.values(tasks).filter((t) => t.featureId === feature.id).sort(byRank);
-  return <div className="space-y-5">
+  return <Viewing target={{ type: "feature", id: feature.id }}><div className="space-y-5">
     <Link to="/w/$slug/p/$key/features" params={{ slug, key }} className="text-sm text-muted-foreground hover:underline">← Features</Link>
     <EditableText value={feature.title} onSave={(title) => socket.send("feature.update", { id: feature.id, title })} render={(p) => <Input {...p} aria-label="Feature title" className="font-heading text-lg font-semibold" />} />
     <label className="flex flex-wrap items-center gap-2 text-sm">Status
@@ -79,7 +80,7 @@ export function FeaturePage() {
     </label>
     {feature.decidedBy && feature.decidedAt !== null && <p className="text-xs text-muted-foreground">Last decision by {members[feature.decidedBy]?.name ?? "someone"} on {new Date(feature.decidedAt).toLocaleString()}</p>}
     <FeatureDonePrompt feature={feature} />
-    <Card className="gap-2 px-4"><h2 className="font-semibold">Description</h2><EditableText value={feature.description} multiline onSave={(description) => socket.send("feature.update", { id: feature.id, description })} render={(p) => <MarkdownInput {...p} aria-label="Feature description" placeholder="Describe the proposal…" className="min-h-32" />} /></Card>
+    <Card className="gap-2 px-4"><h2 className="font-semibold">Description</h2><EditableText field="description" value={feature.description} multiline onSave={(description) => socket.send("feature.update", { id: feature.id, description })} render={(p) => <MarkdownInput {...p} aria-label="Feature description" placeholder="Describe the proposal…" className="min-h-32" />} /></Card>
     <section className="space-y-3"><h2 className="font-semibold">Tasks ({linked.length})</h2>
       {project.archivedAt === null && <form className="space-y-2" onSubmit={(e) => {
         e.preventDefault();
@@ -92,5 +93,5 @@ export function FeaturePage() {
     </section>
     <Comments key={feature.id} target={{ type: "feature", id: feature.id }} />
       <ActivityFeed key={"activity-" + feature.id} target={{ type: "feature", id: feature.id }} />
-  </div>;
+  </div></Viewing>;
 }

@@ -1,0 +1,28 @@
+import { evictDurableObject, runInDurableObject } from "cloudflare:test";
+import { describe, expect, it } from "vitest";
+import { connect, freshWorkspaceId, newMember, workspaceStub } from "./helpers";
+describe("attachment-only presence", () => {
+  it("deduplicates identical tabs, preserves different views, and survives reconstruction", async () => {
+    const id = freshWorkspaceId(), alice = newMember(), bob = newMember("Bob");
+    const a = await connect(id, alice), a2 = await connect(id, alice), b = await connect(id, bob);
+    const viewing = { type: "task", id: "task-a" }, editing = { ref: viewing, field: "description" };
+    a.ws.send(JSON.stringify({ type: "presence", viewing, editing }));
+    await b.next("presence", (m) => m.members.some((p) => p.editing?.field === "description"));
+    a2.ws.send(JSON.stringify({ type: "presence", viewing, editing }));
+    const deduped = await b.next("presence", (m) => m.members.some((p) => p.editing?.field === "description"));
+    expect(deduped.members).toHaveLength(1);
+    a2.ws.send(JSON.stringify({ type: "presence", viewing: { type: "feature", id: "feature-b" }, editing: null }));
+    await b.next("presence", (m) => m.members.length === 2);
+    await evictDurableObject(workspaceStub(id));
+    b.ws.send(JSON.stringify({ type: "presence", viewing: { type: "project", id: "project" } }));
+    const rebuilt = await b.next("presence", (m) => m.members.length === 3);
+    expect(rebuilt.members.some((p) => p.memberId === alice.id && p.editing?.field === "description")).toBe(true);
+    const tables = await runInDurableObject(workspaceStub(id), (_, state) => state.storage.sql.exec<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table'").toArray().map((r) => r.name));
+    expect(tables).not.toContain("presence");
+    a.close();
+    const left = await b.next("presence", (m) => m.members.some((p) => p.viewing?.id === "project") && m.members.some((p) => p.viewing?.type === "feature") && !m.members.some((p) => p.editing?.field === "description"));
+    expect(left.members.some((p) => p.memberId === alice.id && p.viewing?.type === "feature")).toBe(true);
+    a2.ws.send(JSON.stringify({ type: "presence", viewing: null, editing: null }));
+    await b.next("presence", (m) => m.members.some((p) => p.viewing?.id === "project") && !m.members.some((p) => p.memberId === alice.id));
+  });
+});

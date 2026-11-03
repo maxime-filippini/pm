@@ -1,3 +1,4 @@
+import { Viewing } from "@/components/Presence";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { Comments } from "@/components/Comments";
@@ -48,7 +49,7 @@ export function TaskPage() {
   const assignable = Object.values(members).filter((m) => m.active || m.id === task.assigneeId).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div className="space-y-5">
+    <Viewing target={{ type: "task", id: task.id }}><div className="space-y-5">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {/* Back returns to the list you came from (Tasks or My Tasks); a fresh tab falls back to Tasks. */}
         {canGoBack ? (
@@ -104,7 +105,7 @@ export function TaskPage() {
       <Card className="gap-2 px-4">
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Description</h2>
         <EditableText
-          value={task.description}
+          field="description" value={task.description}
           onSave={(description) => socket.send("task.update", { id: task.id, description })}
           render={(p) => <MarkdownInput {...p} placeholder="Add a description…" className="min-h-32" />}
           multiline
@@ -117,6 +118,6 @@ export function TaskPage() {
         Created by {creator} on {new Date(task.createdAt).toLocaleString()}
         {task.completedAt && ` · Done ${new Date(task.completedAt).toLocaleString()}`}
       </p>
-    </div>
+    </div></Viewing>
   );
 }

@@ -1,3 +1,5 @@
+import { Viewing } from "@/components/Presence";
+import { ConcurrentDraft } from "@/components/ConcurrentDraft";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
@@ -73,7 +75,7 @@ export function ProjectMeetingsPage() {
   const project = useProject(key);
   const open = useOpenMeeting(project?.id);
   if (!project) return null;
-  return open ? <MeetingInProgress slug={slug} project={project} meeting={open} /> : <NextMeeting slug={slug} project={project} />;
+  return <Viewing target={{ type: "project", id: project.id }}>{open ? <MeetingInProgress slug={slug} project={project} meeting={open} /> : <NextMeeting slug={slug} project={project} />}</Viewing>;
 }
 
 // ---- Between Meetings: build the agenda ----
@@ -120,7 +122,7 @@ function TopicCard({ slug, project, topic, row }: { slug: string; project: Proje
   const { handle, moveButtons, className, ...li } = row;
 
   return (
-    <li {...li} className={cn("flex items-start gap-3 rounded-lg border bg-card px-3 py-3 text-sm sm:py-2.5", className)}>
+    <li id={"topic-" + topic.id} {...li} className={cn("flex items-start gap-3 rounded-lg border bg-card px-3 py-3 text-sm sm:py-2.5", className)}>
       <span className="mt-0.5 flex">{handle}</span>
       {editing ? (
         <TopicEditor project={project} topic={topic} onDone={() => setEditing(false)} />
@@ -246,6 +248,7 @@ function TopicEditor({ project, topic, onDone }: { project: Project; topic: Topi
     onDone();
   };
   return (
+    <ConcurrentDraft target={{ type: "topic", id: topic.id }} field="body" value={JSON.stringify([topic.title, topic.body, topic.refId])} draft={JSON.stringify([title, body, taskId || null])} onUseTheirs={() => { setTitle(topic.title); setBody(topic.body); setTaskId(topic.refId ?? ""); }}>
     <form onSubmit={save} className="min-w-0 flex-1 space-y-2" onMouseDown={(e) => e.stopPropagation()}>
       <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Topic title" onKeyDown={(e) => e.key === "Escape" && onDone()} />
       <MarkdownInput value={body} onChange={(e) => setBody(e.target.value)} placeholder="Details" className="min-h-20" />
@@ -254,7 +257,7 @@ function TopicEditor({ project, topic, onDone }: { project: Project; topic: Topi
         <Button type="button" variant="ghost" size="sm" onClick={onDone}>Cancel</Button>
         <Button type="submit" size="sm" disabled={!title.trim()}>Save</Button>
       </div>
-    </form>
+    </form></ConcurrentDraft>
   );
 }
 
@@ -408,7 +411,7 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
   const [creatingFeature, setCreatingFeature] = useState(false);
 
   return (
-    <li>
+    <li id={"topic-" + topic.id}>
       <Card className={cn("gap-3 px-4", resolved && "bg-card/50")}>
         <div className="flex items-start gap-3">
           {resolved ? (
@@ -440,7 +443,7 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
           </div>
         ) : (
           <OutcomeEditor
-            initial={topic.outcome ?? ""}
+            topicId={topic.id} initial={topic.outcome ?? ""}
             onSave={(outcome) => {
               socket.send("meeting.recordOutcome", { topicId: topic.id, outcome });
               setEditingOutcome(false);
@@ -458,7 +461,8 @@ function MeetingTopic({ index, slug, project, meeting, topic }: { index: number;
   );
 }
 
-function OutcomeEditor({ initial, onSave, onCancel, onCreateTask }: {
+function OutcomeEditor({ topicId, initial, onSave, onCancel, onCreateTask }: {
+  topicId: string;
   initial: string;
   onSave: (outcome: string) => void;
   onCancel?: () => void;
@@ -466,7 +470,7 @@ function OutcomeEditor({ initial, onSave, onCancel, onCreateTask }: {
 }) {
   const [text, setText] = useState(initial);
   return (
-    <form
+    <ConcurrentDraft target={{ type: "topic", id: topicId }} field="outcome" value={initial} draft={text} onUseTheirs={() => setText(initial)}><form
       className="ml-8 space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
@@ -488,7 +492,7 @@ function OutcomeEditor({ initial, onSave, onCancel, onCreateTask }: {
         {onCreateTask && <Button type="button" variant="outline" size="sm" onClick={onCreateTask}><PlusIcon /> Create Task</Button>}
         {onCancel && <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>}
       </div>
-    </form>
+    </form></ConcurrentDraft>
   );
 }
 
@@ -634,7 +638,7 @@ export function PastMeetingPage() {
         {topics.length === 0 && <p className="text-sm text-muted-foreground">No Topics were resolved in this Meeting.</p>}
         <ol className="space-y-2">
           {topics.map((t) => (
-            <li key={t.id}>
+            <li key={t.id} id={"topic-" + t.id}>
               <Card className="gap-2 px-4">
                 <p className="font-medium">{t.title}</p>
                 {t.body && <Markdown text={t.body} />}

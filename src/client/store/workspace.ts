@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Command } from "../../shared/commands";
-import type { Activity, Comment, CommentTarget, Change, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
+import type { Activity, Presence, Comment, CommentTarget, Change, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
 import { commentChange, commentKey, commentPage, newCollection, projectComments, type CommentCollection } from "./comments";
 import type { CommentsPage, Snapshot } from "../../shared/protocol";
 import { applyOptimistic } from "../sync/optimistic";
@@ -34,6 +34,7 @@ type State = {
   commentCollections: Record<string, CommentCollection>;
   comments: Record<string, Comment[]>;
   connectionEpoch: number;
+  presence: Presence[];
 };
 
 const empty: Data = { members: {}, projects: {}, features: {}, tasks: {}, topics: {}, meetings: {} };
@@ -57,7 +58,7 @@ export const useWorkspace = create<State>(() => ({
   view: empty,
   activity: null,
   lastActivity: [],
-  commentCollections: {}, comments: {}, connectionEpoch: 0,
+  commentCollections: {}, comments: {}, connectionEpoch: 0, presence: [],
 }));
 
 const set = (patch: Partial<State> | ((s: State) => Partial<State>)) =>
@@ -68,7 +69,7 @@ const set = (patch: Partial<State> | ((s: State) => Partial<State>)) =>
 
 export const workspaceActions = {
   reset() {
-    useWorkspace.setState({ status: "connecting", memberId: null, version: 0, confirmed: empty, pending: [], view: empty, activity: null, lastActivity: [], commentCollections: {}, comments: {}, connectionEpoch: 0 });
+    useWorkspace.setState({ status: "connecting", memberId: null, version: 0, confirmed: empty, pending: [], view: empty, activity: null, lastActivity: [], commentCollections: {}, comments: {}, connectionEpoch: 0, presence: [] });
   },
   setStatus(status: ConnectionStatus) {
     useWorkspace.setState({ status });
@@ -77,6 +78,7 @@ export const workspaceActions = {
   snapshot(version: number, memberId: string, data: Snapshot) {
     set((s) => ({
       connectionEpoch: s.connectionEpoch + 1,
+      presence: [],
       commentCollections: Object.fromEntries(Object.entries(s.commentCollections).map(([key, c]) => [key, newCollection(c.target)])),
       version,
       memberId,

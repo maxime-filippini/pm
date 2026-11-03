@@ -1,5 +1,6 @@
 import { parseCommand, type Command } from "../../shared/commands";
 import { uuidv7 } from "../../shared/ids";
+import type { Ref, Presence } from "../../shared/entities";
 import type { ServerMessage } from "../../shared/protocol";
 import { useWorkspace, workspaceActions } from "../store/workspace";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ type QueryWaiter = { resolve: (data: unknown) => void; reject: (e: Error) => voi
  */
 export class WorkspaceSocket {
   private ws: WebSocket | null = null;
+  private presenceState: Omit<Presence, "memberId"> = {};
   private stopped = false;
   private attempt = 0;
   private missedPongs = 0;
@@ -38,6 +40,11 @@ export class WorkspaceSocket {
     workspaceActions.addPending({ id, command: parsed.command, at: Date.now() });
     this.transmit({ type: "cmd", id, name, args: parsed.command.args });
     return true;
+  }
+
+  presence(patch: { viewing?: Ref | null; editing?: { ref: Ref; field: string } | null }) {
+    this.presenceState = { ...this.presenceState, ...patch };
+    this.transmit({ type: "presence", ...this.presenceState });
   }
 
   query<T>(name: string, args: unknown): Promise<T> {
@@ -108,8 +115,12 @@ export class WorkspaceSocket {
 
   private handle(message: ServerMessage) {
     switch (message.type) {
+      case "presence":
+        useWorkspace.setState({ presence: message.members });
+        return;
       case "snapshot": {
         workspaceActions.snapshot(message.version, message.memberId, message.data);
+        this.transmit({ type: "presence", ...this.presenceState });
         // Resend anything the server may not have seen. Creates are idempotent; updates are LWW.
         for (const p of useWorkspace.getState().pending) {
           this.transmit({ type: "cmd", id: p.id, name: p.command.name, args: p.command.args });
