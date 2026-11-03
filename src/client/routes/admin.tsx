@@ -4,7 +4,6 @@ import { api, useMe } from "../api";
 import { toast } from "sonner";
 import { Empty } from "@/components/common";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 type AdminWorkspace = {
@@ -62,7 +61,7 @@ function WorkspaceCard({ workspace: w, run }: { workspace: AdminWorkspace; run: 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   return (
-    <Card className="gap-3 px-4">
+    <section className="space-y-4 border-l border-border/60 py-1 pl-5">
       <h2 className="font-semibold">
         {w.name} <span className="font-mono text-xs font-normal text-muted-foreground">/w/{w.slug}</span>
       </h2>
@@ -105,6 +104,6 @@ function WorkspaceCard({ workspace: w, run }: { workspace: AdminWorkspace; run: 
         <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" className="h-9 min-w-48 flex-1" />
         <Button type="submit" variant="outline" className="h-9" disabled={!email || !name}>Add Member</Button>
       </form>
-    </Card>
+    </section>
   );
 }

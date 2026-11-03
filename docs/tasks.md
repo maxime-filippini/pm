@@ -84,6 +84,8 @@ Topics and Meetings are per Project (a "Meetings" tab next to Tasks / My Tasks).
 
 ## Delivery polish
 
+- [x] Open section layout with vertical separators, combined Task filters/results, direct Task-row deletion with Undo, and a Workspace return action
+
 - [x] Page headings, explanations and named sections across Workspaces, administration, Tasks, Features, Meetings, settings and discussion
 
 - [x] Route-based code splitting: reduce the initial bundle and verify navigation/loading/error states (handoff step 9)

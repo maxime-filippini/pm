@@ -249,12 +249,12 @@ See [ADR 0004](./adr/0004-pull-request-links-are-manual-and-polled.md).
 
 ## 8. Views
 
-All views are responsive and work on a phone first.
+All views are responsive and work on a phone first. Use open sections, spacing and vertical separators instead of surrounding each zone with a box. On desktop the Tasks view separates task creation from the current-task view with a vertical split; on phones those zones stack. Filters and results belong to the same current-task section.
 
 - **Workspace home**: list of Projects, each with its open Task count, Topics to discuss, and whether a Meeting is in progress.
-- **Project / Tasks**: list grouped by status, sortable by hand (drag on desktop, "move up/down" on mobile), with filters for status, assignee and Feature.
-- **Project navigation**: the Project switcher and Tasks / My Tasks / Features / Meetings tabs keep Members inside the selected Project. Switching Projects preserves the current tab. Task detail links include the Project key.
-- **My Tasks**: the Project tab shows Tasks assigned to me in that Project, excluding `done` and `canceled` by default. A separate Workspace-wide view remains available at `/w/:slug/me` and through the Project switcher; it groups Tasks by active Project.
+- **Project / Tasks**: list grouped by status, sortable by hand (drag on desktop, "move up/down" on mobile), with filters for status, assignee and Feature. Each Task row offers soft deletion with Undo.
+- **Project navigation**: the Project switcher and Tasks / My Tasks / Features / Meetings tabs keep Members inside the selected Project. Switching Projects preserves the current tab. A visible Workspace button returns to the Workspace’s Project list; the PM logo returns to the main page. The Project switcher also offers Back to Workspace. Task detail links include the Project key.
+- **My Tasks**: the Project tab shows Tasks assigned to me in that Project, excluding `done` and `canceled` by default. A separate Workspace-wide view remains available at `/w/:slug/me` and from Workspace navigation; it groups Tasks by active Project.
 - **Features**: per Project, `proposed` first, then `accepted` with Task progress (n/m done), then `done` and `rejected` collapsed.
 - **Feature detail**: description, status controls (with who decided and when), Tasks, Comments, Activity.
 - **Task detail**: key, title, description, status, assignee, Feature, Pull Request links with state badges, Comments, Activity.

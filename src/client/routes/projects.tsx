@@ -54,7 +54,7 @@ export function ProjectsPage() {
               <Link
                 to="/w/$slug/p/$key"
                 params={{ slug, key: p.key }}
-                className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3 text-sm transition-colors hover:bg-muted"
+                className="flex items-center gap-3 rounded-md px-3 py-3 text-sm transition-colors hover:bg-muted/40"
               >
                 <span className="w-14 font-mono text-xs text-muted-foreground">{p.key}</span>
                 <span className="flex-1 font-medium">{p.name}</span>

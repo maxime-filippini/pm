@@ -11,7 +11,6 @@ import { ArrowLeftIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
 import { deletedToast, Empty, STATUS_LABEL } from "@/components/common";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -81,7 +80,7 @@ export function TaskPage() {
       />
 
       </section>
-      <section className="space-y-3 rounded-xl border p-4"><SectionHeader title="Progress and ownership" description="Choose a status and one assignee. Link a Feature when this work supports a wider proposal." />
+      <section className="space-y-4 border-l border-border/60 pl-5"><SectionHeader title="Progress and ownership" description="Choose a status and one assignee. Link a Feature when this work supports a wider proposal." />
       <div className="flex flex-wrap gap-4 text-sm">
         <Label className="gap-2 font-normal">
           <span className="text-muted-foreground">Status</span>
@@ -109,7 +108,7 @@ export function TaskPage() {
       {task.featureId && features[task.featureId] && <FeatureDonePrompt feature={features[task.featureId]!} />}
 
       </section>
-      <Card className="gap-2 px-4">
+      <section className="space-y-3 border-l border-border/60 py-1 pl-5">
         <SectionHeader title="Description" description="Add enough context for another Member to pick up the work." />
         <EditableText
           field="description" value={task.description}
@@ -117,7 +116,7 @@ export function TaskPage() {
           render={(p) => <MarkdownInput {...p} placeholder="Add a description…" className="min-h-32" />}
           multiline
         />
-      </Card>
+      </section>
 
       <PullRequests key={"pr-" + task.id} taskId={task.id} />
       <Comments key={task.id} target={{ type: "task", id: task.id }} />

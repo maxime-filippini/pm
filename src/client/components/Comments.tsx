@@ -8,7 +8,6 @@ import { commentKey } from "../store/comments";
 import { useWorkspace, workspaceActions } from "../store/workspace";
 import { useSocket } from "../sync/context";
 import { Button } from "./ui/button";
-import { Card } from "./ui/card";
 import { Markdown, MarkdownInput } from "./Markdown";
 
 const EMPTY: Comment[] = [];
@@ -49,7 +48,7 @@ export function Comments({ target }: { target: CommentTarget }) {
     if (status === "online") void load();
   }, [key, epoch, status]);
 
-  return <Card className="gap-3 px-4">
+  return <section className="space-y-4 border-l border-border/60 py-1 pl-5">
     <SectionHeader title="Comments" description="Discuss the work here. Everyone can post; you can edit or delete your own Comments." />
     {items.map((comment) => <CommentRow key={comment.id} comment={comment} author={members[comment.authorId]?.name ?? "Former Member"} own={memberId === comment.authorId} />)}
     {loading && <p role="status" className="text-sm text-muted-foreground">Loading Comments…</p>}
@@ -63,7 +62,7 @@ export function Comments({ target }: { target: CommentTarget }) {
       <MarkdownInput aria-label="New Comment" placeholder="Add a Comment…" maxLength={20_000} value={body} onChange={(e) => setBody(e.target.value)} />
       <Button disabled={!body.trim()}>Post Comment</Button>
     </form>
-  </Card>;
+  </section>;
 }
 function CommentRow({ comment, author, own }: { comment: Comment; author: string; own: boolean }) {
   const socket = useSocket();

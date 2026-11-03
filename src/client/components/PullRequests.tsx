@@ -22,9 +22,9 @@ export function PullRequests({ taskId }: { taskId: string }) {
   const [url, setUrl] = useState("");
   useEffect(() => { if (status === "online") socket.send("pr.refresh", { taskId }); }, [socket, taskId, epoch, status]);
   const merged = links.length > 0 && links.every((p) => p.state === "merged" && p.fetchError === null);
-  return <section className="space-y-3 border-t pt-5">
+  return <section className="space-y-4 border-l border-border/60 pl-5">
     <SectionHeader title="Pull Requests" description="Link GitHub work to this Task. States refresh when you open the Task; completion stays your choice." />
-    <ul className="space-y-3">{links.map((link) => <li key={link.id} className="space-y-2 rounded-lg border p-3 text-sm">
+    <ul className="space-y-3">{links.map((link) => <li key={link.id} className="space-y-2 py-2 text-sm">
       <div className="flex flex-wrap items-start gap-2"><a href={link.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 break-words underline">{link.title ?? `${link.owner}/${link.repo} #${link.number}`}</a><Badge variant="secondary">{link.fetchError ? "Needs attention" : link.state ?? "Fetching…"}</Badge></div>
       <p className="break-all text-xs text-muted-foreground">{link.owner}/{link.repo} #{link.number}{link.fetchedAt && ` · Checked ${new Date(link.fetchedAt).toLocaleString()}`}</p>
       {link.fetchError && <p className="text-sm text-amber-400">{PR_ERROR[link.fetchError]}</p>}

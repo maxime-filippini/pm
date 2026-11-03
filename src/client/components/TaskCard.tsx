@@ -1,10 +1,13 @@
+import { Trash2Icon } from "lucide-react";
+import { Button } from "./ui/button";
+import { useSocket } from "../sync/context";
 import { Link } from "@tanstack/react-router";
 import type { ComponentProps, ReactNode } from "react";
 import type { Project, Task } from "../../shared/entities";
 import { taskKey } from "../../shared/entities";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "../store/workspace";
-import { MemberAvatar, StatusDot } from "./common";
+import { deletedToast, MemberAvatar, StatusDot } from "./common";
 
 type Props = ComponentProps<"li"> & {
   slug: string;
@@ -18,10 +21,11 @@ type Props = ComponentProps<"li"> & {
 
 /** One Task as a card in a list. Sortable lists pass dnd-kit's ref, style and listeners through. */
 export function TaskCard({ slug, task, project, leading, actions, className, ...li }: Props) {
+  const socket = useSocket();
   const assignee = useWorkspace((s) => (task.assigneeId ? s.view.members[task.assigneeId] : undefined));
   const key = taskKey(project, task);
   return (
-    <li {...li} className={cn("flex items-center gap-3 rounded-lg border bg-card px-3 py-3 text-sm sm:py-2.5", className)}>
+    <li {...li} className={cn("group flex items-center gap-2 rounded-md px-2 py-3 text-sm transition-colors hover:bg-muted/40 sm:gap-3 sm:py-2.5", className)}>
       {leading}
       <StatusDot status={task.status} />
       <Link
@@ -35,6 +39,17 @@ export function TaskCard({ slug, task, project, leading, actions, className, ...
       </Link>
       {actions}
       {assignee && <MemberAvatar name={assignee.name} />}
+      <Button
+        type="button" variant="ghost" size="icon-sm"
+        aria-label={`Delete ${key}`} title={`Delete ${key}`}
+        className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (socket.send("task.delete", { id: task.id })) deletedToast(`Deleted ${key}`, () => socket.send("task.restore", { id: task.id }));
+        }}
+      ><Trash2Icon /></Button>
     </li>
   );
 }

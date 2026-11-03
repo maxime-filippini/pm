@@ -12,7 +12,6 @@ import { byRank } from "../../shared/rank";
 import { Empty } from "@/components/common";
 import { TaskCard, TaskList } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useWorkspace } from "../store/workspace";
@@ -31,15 +30,15 @@ export function FeaturesPage() {
   const rows = (status: FeatureStatus) => group(status).map((f) => {
     const linked = Object.values(tasks).filter((t) => t.featureId === f.id);
     const closed = linked.filter((t) => t.status === "done" || t.status === "canceled").length;
-    return <Card key={f.id} className="gap-2 px-4">
+    return <section key={f.id} className="space-y-3 border-l border-border/60 py-1 pl-5">
       <Link to="/w/$slug/p/$key/features/$featureId" params={{ slug, key, featureId: f.id }} className="break-words font-medium hover:underline">{f.title}</Link>
       <p className="text-xs text-muted-foreground">{closed}/{linked.length} Tasks done or canceled</p>
       <FeatureDonePrompt feature={f} />
-    </Card>;
+    </section>;
   });
   return <div className="space-y-5">
     <PageHeader title={project.name + ": Features"} description="Propose what to build, discuss it together, then accept or reject it. Accepted Features can be broken into Tasks; completion is always a Member’s choice." />
-    {project.archivedAt === null && <section className="space-y-3 rounded-xl border p-4"><SectionHeader title="Propose a Feature" description="Start with a short title. Add context and discuss the proposal on its detail page." /><form className="flex gap-2" onSubmit={(e) => {
+    {project.archivedAt === null && <section className="space-y-4 border-l border-border/60 pl-5"><SectionHeader title="Propose a Feature" description="Start with a short title. Add context and discuss the proposal on its detail page." /><form className="flex gap-2" onSubmit={(e) => {
       e.preventDefault();
       if (socket.send("feature.create", { id: uuidv7(), projectId: project.id, title })) setTitle("");
     }}><Input value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} aria-label="Feature title" placeholder="Propose a Feature" /><Button disabled={!title.trim()}>Propose</Button></form></section>}
@@ -70,7 +69,7 @@ export function FeaturePage() {
     </label>
     {feature.decidedBy && feature.decidedAt !== null && <p className="text-xs text-muted-foreground">Last decision by {members[feature.decidedBy]?.name ?? "someone"} on {new Date(feature.decidedAt).toLocaleString()}</p>}
     <FeatureDonePrompt feature={feature} />
-    <Card className="gap-2 px-4"><SectionHeader title="Description" description="Explain the problem, desired behavior and any limits on the proposal." /><EditableText field="description" value={feature.description} multiline onSave={(description) => socket.send("feature.update", { id: feature.id, description })} render={(p) => <MarkdownInput {...p} aria-label="Feature description" placeholder="Describe the proposal…" className="min-h-32" />} /></Card>
+    <section className="space-y-3 border-l border-border/60 py-1 pl-5"><SectionHeader title="Description" description="Explain the problem, desired behavior and any limits on the proposal." /><EditableText field="description" value={feature.description} multiline onSave={(description) => socket.send("feature.update", { id: feature.id, description })} render={(p) => <MarkdownInput {...p} aria-label="Feature description" placeholder="Describe the proposal…" className="min-h-32" />} /></section>
     <section className="space-y-3"><SectionHeader title={`Tasks (${linked.length})`} description="Break the Feature into concrete work. Task progress informs the discussion but never completes the Feature automatically." />
       {project.archivedAt === null && <form className="space-y-2" onSubmit={(e) => {
         e.preventDefault();

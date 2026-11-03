@@ -6,7 +6,7 @@ import "./index.css";
 
 const rootRoute = createRootRoute({
   component: () => (
-    <div className="mx-auto max-w-3xl px-3 pt-3 pb-24 sm:px-4 sm:pt-4">
+    <div className="mx-auto max-w-5xl px-3 pt-3 pb-24 sm:px-4 sm:pt-4">
       <AppHeader />
       <Outlet />
       <Toaster position="bottom-center" />
