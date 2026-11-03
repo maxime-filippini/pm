@@ -6,9 +6,9 @@ export function snapshot(sql: SqlStorage): Snapshot {
     members: all(sql, toMember, "SELECT * FROM members ORDER BY name"),
     projects: all(sql, toProject, "SELECT * FROM projects ORDER BY name"),
     features: all(sql, toFeature, "SELECT * FROM features"),
-    tasks: all(sql, toTask, "SELECT * FROM tasks ORDER BY rank"),
+    tasks: all(sql, toTask, "SELECT * FROM tasks WHERE deleted_at IS NULL ORDER BY rank"),
     topics: all(sql, toTopic, "SELECT * FROM topics ORDER BY rank"),
-    meetings: all(sql, toMeeting, `${MEETING_SELECT} ${GROUP_BY_MEETING} ORDER BY m.started_at`),
+    meetings: all(sql, toMeeting, `${MEETING_SELECT} WHERE m.deleted_at IS NULL ${GROUP_BY_MEETING} ORDER BY m.started_at`),
   };
 }
 

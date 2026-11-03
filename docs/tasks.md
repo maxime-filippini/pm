@@ -58,6 +58,9 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [x] Two browsers see each other's Task edits live (verified locally)
 - [ ] DO duration near zero while tabs sit idle (check dashboard metrics)
 
+## Extras
+- [x] Soft delete for Tasks and Meetings (`task.delete/restore`, `meeting.delete/restore`), Undo toast; a deleted Meeting's Topics go back on the agenda
+
 ## M2: Planning
 - [ ] Features: `feature.create/update/setStatus`, `decided_by/at`, Features view, Feature detail, "Mark Feature done?" prompt
 - [ ] Feature–Task linkage (same Project only; UI suggests accepted)

@@ -1,8 +1,9 @@
-import { Link, Navigate, useCanGoBack, useParams, useRouter } from "@tanstack/react-router";
+import { Link, Navigate, useCanGoBack, useNavigate, useParams, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TASK_STATUSES, type TaskStatus } from "../../shared/entities";
-import { ArrowLeftIcon } from "lucide-react";
-import { Empty, STATUS_LABEL } from "@/components/common";
+import { ArrowLeftIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
+import { deletedToast, Empty, STATUS_LABEL } from "@/components/common";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ export function TaskPage() {
   const socket = useSocket();
   const router = useRouter();
   const canGoBack = useCanGoBack();
+  const navigate = useNavigate();
   const taskKey = `${projectKey}-${number}`;
   const project = useWorkspace((s) => Object.values(s.view.projects).find((p) => p.key === projectKey));
   const task = useWorkspace((s) => (project ? Object.values(s.view.tasks).find((t) => t.projectId === project.id && t.number === Number(number)) : undefined));
@@ -33,6 +35,12 @@ export function TaskPage() {
   if (!project || !task) return <Empty>No Task {taskKey}.</Empty>;
 
   const creator = members[task.createdBy]?.name ?? "someone";
+  const remove = () => {
+    if (!socket.send("task.delete", { id: task.id })) return;
+    deletedToast(`Deleted ${taskKey}`, () => socket.send("task.restore", { id: task.id }));
+    if (canGoBack) router.history.back();
+    else navigate({ to: "/w/$slug/p/$key", params: { slug, key: project.key } });
+  };
   const assignable = Object.values(members).filter((m) => m.active || m.id === task.assigneeId).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
@@ -46,7 +54,15 @@ export function TaskPage() {
             <Link to="/w/$slug/p/$key" params={{ slug, key: project.key }}><ArrowLeftIcon /> Tasks</Link>
           </Button>
         )}
-        <span className="font-mono">{taskKey}</span>
+        <span className="flex-1 font-mono">{taskKey}</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Task actions"><MoreHorizontalIcon /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem variant="destructive" onSelect={remove}><Trash2Icon /> Delete Task</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <EditableText

@@ -1,13 +1,14 @@
 import type { CommandArgs } from "../../../shared/commands";
 import { taskKey } from "../../../shared/entities";
 import { CommandContext, CommandError } from "../context";
-import { all, GROUP_BY_MEETING, MEETING_SELECT, one, toMeeting, toMember, toTask } from "../rows";
+import { all, GROUP_BY_MEETING, MEETING_SELECT, one, toActivity, toMeeting, toMember, toTask, toTopic } from "../rows";
 import { getProject } from "./project";
 import * as task from "./task";
 import { emitTopic, getTopic } from "./topic";
 
+/** A live (not deleted) Meeting. */
 function getMeeting(ctx: CommandContext, id: string) {
-  const meeting = one(ctx.sql, toMeeting, `${MEETING_SELECT} WHERE m.id = ? ${GROUP_BY_MEETING}`, id);
+  const meeting = one(ctx.sql, toMeeting, `${MEETING_SELECT} WHERE m.id = ? AND m.deleted_at IS NULL ${GROUP_BY_MEETING}`, id);
   if (!meeting) throw new CommandError("not_found", "Meeting not found");
   return meeting;
 }
@@ -17,7 +18,7 @@ function emitMeeting(ctx: CommandContext, id: string) {
 }
 
 function openMeeting(ctx: CommandContext, projectId: string) {
-  return one(ctx.sql, toMeeting, `${MEETING_SELECT} WHERE m.project_id = ? AND m.ended_at IS NULL ${GROUP_BY_MEETING}`, projectId);
+  return one(ctx.sql, toMeeting, `${MEETING_SELECT} WHERE m.project_id = ? AND m.ended_at IS NULL AND m.deleted_at IS NULL ${GROUP_BY_MEETING}`, projectId);
 }
 
 /** Outcomes can only change while the Topic's Project has an open Meeting. */
@@ -113,4 +114,53 @@ export function close(ctx: CommandContext, args: CommandArgs<"meeting.close">) {
   const resolved = ctx.sql.exec<{ n: number }>("SELECT COUNT(*) AS n FROM topics WHERE resolved_in_meeting_id = ?", meeting.id).toArray()[0]!.n;
   ctx.activity("meeting.closed", "meeting", meeting.id, { projectId: meeting.projectId, resolved });
   emitMeeting(ctx, meeting.id);
+}
+
+type ResolvedTopic = { id: string; outcome: string; resolvedAt: number };
+
+/**
+ * Hides the Meeting. If it was still open it's closed too, so a new one can start. Topics resolved
+ * in it go back on the agenda; their Outcomes are kept in the Activity entry so restore can put them back.
+ */
+export function remove(ctx: CommandContext, args: CommandArgs<"meeting.delete">) {
+  const row = ctx.sql.exec<{ deleted_at: number | null }>("SELECT deleted_at FROM meetings WHERE id = ?", args.id).toArray()[0];
+  if (!row) throw new CommandError("not_found", "Meeting not found");
+  if (row.deleted_at !== null) return; // already deleted
+  const meeting = getMeeting(ctx, args.id);
+
+  const topics = all(ctx.sql, toTopic, "SELECT * FROM topics WHERE resolved_in_meeting_id = ?", meeting.id);
+  const resolved: ResolvedTopic[] = topics.map((t) => ({ id: t.id, outcome: t.outcome ?? "", resolvedAt: t.resolvedAt ?? ctx.now }));
+  ctx.sql.exec("UPDATE topics SET outcome = NULL, resolved_in_meeting_id = NULL, resolved_at = NULL WHERE resolved_in_meeting_id = ?", meeting.id);
+  ctx.sql.exec(
+    "UPDATE meetings SET deleted_at = ?, deleted_by = ?, ended_at = COALESCE(ended_at, ?), ended_by = COALESCE(ended_by, ?) WHERE id = ?",
+    ctx.now, ctx.actorId, ctx.now, ctx.actorId, meeting.id,
+  );
+  ctx.activity("meeting.deleted", "meeting", meeting.id, { projectId: meeting.projectId, topics: resolved });
+  ctx.emit({ entity: "meeting", op: "delete", row: { id: meeting.id } });
+  for (const t of topics) emitTopic(ctx, t.id);
+}
+
+/** Brings the Meeting back (closed) and re-resolves its Topics that are still unresolved. */
+export function restore(ctx: CommandContext, args: CommandArgs<"meeting.restore">) {
+  const row = ctx.sql.exec<{ deleted_at: number | null }>("SELECT deleted_at FROM meetings WHERE id = ?", args.id).toArray()[0];
+  if (!row) throw new CommandError("not_found", "Meeting not found");
+  if (row.deleted_at === null) return; // not deleted
+  ctx.sql.exec("UPDATE meetings SET deleted_at = NULL, deleted_by = NULL WHERE id = ?", args.id);
+
+  const deletion = one(
+    ctx.sql, toActivity,
+    "SELECT * FROM activity WHERE kind = 'meeting.deleted' AND target_id = ? ORDER BY at DESC, id DESC LIMIT 1", args.id,
+  );
+  const topics = (deletion?.data.topics ?? []) as ResolvedTopic[];
+  const restored: string[] = [];
+  for (const t of topics) {
+    // Skip Topics resolved again since (in another Meeting) or deleted.
+    const current = one(ctx.sql, toTopic, "SELECT * FROM topics WHERE id = ?", t.id);
+    if (!current || current.resolvedAt !== null) continue;
+    ctx.sql.exec("UPDATE topics SET outcome = ?, resolved_in_meeting_id = ?, resolved_at = ? WHERE id = ?", t.outcome, args.id, t.resolvedAt, t.id);
+    restored.push(t.id);
+  }
+  ctx.activity("meeting.restored", "meeting", args.id, { topics: restored.length });
+  emitMeeting(ctx, args.id);
+  for (const id of restored) emitTopic(ctx, id);
 }

@@ -62,6 +62,14 @@ export function applyOptimistic(data: Data, command: Command, memberId: string, 
     }
     case "task.move":
       return patchTask(data, command.args.id, { rank: command.args.rank });
+    case "task.delete": {
+      const { [command.args.id]: _, ...tasks } = data.tasks;
+      return { ...data, tasks };
+    }
+    // Restores need the hidden row, which only the server has: wait for its change.
+    case "task.restore":
+    case "meeting.restore":
+      return data;
 
     case "topic.create": {
       const a = command.args;
@@ -111,6 +119,15 @@ export function applyOptimistic(data: Data, command: Command, memberId: string, 
       return patchMeeting(data, command.args.id, { attendeeIds: [...new Set(command.args.memberIds)].sort() });
     case "meeting.close":
       return patchMeeting(data, command.args.id, { endedAt: now, endedBy: memberId });
+    case "meeting.delete": {
+      const { [command.args.id]: _, ...meetings } = data.meetings;
+      const topics = Object.fromEntries(
+        Object.entries(data.topics).map(([id, t]) =>
+          [id, t.resolvedInMeetingId === command.args.id ? { ...t, outcome: null, resolvedInMeetingId: null, resolvedAt: null } : t],
+        ),
+      );
+      return { ...data, meetings, topics };
+    }
     case "meeting.recordOutcome": {
       const meeting = openMeetingFor(data, data.topics[command.args.topicId]?.projectId);
       if (!meeting) return data;

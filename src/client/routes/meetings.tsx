@@ -1,4 +1,4 @@
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   CheckCircle2Icon,
   ChevronRightIcon,
@@ -16,7 +16,7 @@ import { useMemo, useState } from "react";
 import { type Meeting, type Project, type Task, type TaskStatus, type Topic, TASK_STATUSES, taskKey } from "../../shared/entities";
 import { uuidv7 } from "../../shared/ids";
 import { byRank } from "../../shared/rank";
-import { Empty, LinkifiedText, MemberAvatar, SectionHeading, STATUS_LABEL, StatusDot } from "@/components/common";
+import { deletedToast, Empty, LinkifiedText, MemberAvatar, SectionHeading, STATUS_LABEL, StatusDot } from "@/components/common";
 import { SortableList, type SortableRowProps } from "@/components/SortableList";
 import {
   AlertDialog,
@@ -275,6 +275,7 @@ function MeetingInProgress({ slug, project, meeting }: { slug: string; project: 
           </span>
           <h1 className="min-w-0 flex-1 truncate font-heading text-xl font-semibold">Meeting in progress</h1>
           <CloseMeetingButton meeting={meeting} unresolved={agenda.length - resolved} />
+          <MeetingActions meeting={meeting} resolved={resolved} />
         </div>
         <p className="text-sm text-muted-foreground">
           Started {time(meeting.startedAt)}{starter && ` by ${starter.name}`} · {resolved} of {agenda.length} Topics discussed
@@ -319,6 +320,57 @@ function Attendees({ meeting }: { meeting: Meeting }) {
         </button>
       ))}
     </div>
+  );
+}
+
+/** "⋯" menu with Delete, used on the running Meeting and on past Meetings. */
+function MeetingActions({ meeting, resolved, onDeleted }: { meeting: Meeting; resolved: number; onDeleted?: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Meeting actions"><MoreHorizontalIcon /></Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem variant="destructive" onSelect={() => setConfirming(true)}><Trash2Icon /> Delete Meeting</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DeleteMeetingDialog meeting={meeting} resolved={resolved} open={confirming} onOpenChange={setConfirming} onDeleted={onDeleted} />
+    </>
+  );
+}
+
+function DeleteMeetingDialog({ meeting, resolved, open, onOpenChange, onDeleted }: {
+  meeting: Meeting;
+  resolved: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDeleted?: () => void;
+}) {
+  const socket = useSocket();
+  const remove = () => {
+    if (!socket.send("meeting.delete", { id: meeting.id })) return;
+    deletedToast("Meeting deleted", () => socket.send("meeting.restore", { id: meeting.id }));
+    onDeleted?.();
+  };
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this Meeting?</AlertDialogTitle>
+          <AlertDialogDescription>
+            It disappears from the Project as if it never happened.
+            {resolved > 0 && ` The ${resolved} Topic${resolved === 1 ? "" : "s"} discussed in it go back on the agenda.`}
+            {" "}Tasks created during it are kept. You can undo right after.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onClick={remove}>Delete Meeting</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -536,6 +588,7 @@ function PastMeetings({ slug, project }: { slug: string; project: Project }) {
 
 export function PastMeetingPage() {
   const { slug, key, meetingId } = useParams({ from: "/w/$slug/p/$key/meetings/$meetingId" });
+  const navigate = useNavigate();
   const project = useProject(key);
   const meeting = useWorkspace((s) => s.view.meetings[meetingId]);
   const allTopics = useWorkspace((s) => s.view.topics);
@@ -547,10 +600,12 @@ export function PastMeetingPage() {
 
   return (
     <div className="space-y-5">
-      <div className="text-sm">
+      <div className="flex items-center text-sm">
         <Button variant="ghost" size="sm" className="-ml-2" asChild>
           <Link to="/w/$slug/p/$key/meetings" params={{ slug, key }}>← Meetings</Link>
         </Button>
+        <span className="flex-1" />
+        <MeetingActions meeting={meeting} resolved={topics.length} onDeleted={() => navigate({ to: "/w/$slug/p/$key/meetings", params: { slug, key } })} />
       </div>
       <header className="space-y-1">
         <h1 className="font-heading text-xl font-semibold">{date(meeting.startedAt)}</h1>

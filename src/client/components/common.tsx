@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Fragment, type ReactNode } from "react";
 import type { TaskStatus } from "../../shared/entities";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -72,4 +73,9 @@ export function LinkifiedText({ slug, text, className }: { slug: string; text: s
   }
   parts.push(text.slice(last));
   return <p className={cn("whitespace-pre-wrap", className)}>{parts.map((p, i) => <Fragment key={i}>{p}</Fragment>)}</p>;
+}
+
+/** Toast after a soft delete, with an Undo button. */
+export function deletedToast(message: string, undo: () => void) {
+  toast(message, { action: { label: "Undo", onClick: undo }, duration: 8000 });
 }
