@@ -15,6 +15,8 @@ export function apply(ctx: CommandContext, command: Command): void {
     case "task.update": return task.update(ctx, command.args);
     case "task.setStatus": return task.setStatus(ctx, command.args);
     case "task.move": return task.move(ctx, command.args);
+    case "task.delete": return task.remove(ctx, command.args);
+    case "task.restore": return task.restore(ctx, command.args);
     case "topic.create": return topic.create(ctx, command.args);
     case "topic.update": return topic.update(ctx, command.args);
     case "topic.move": return topic.move(ctx, command.args);
@@ -25,5 +27,7 @@ export function apply(ctx: CommandContext, command: Command): void {
     case "meeting.clearOutcome": return meeting.clearOutcome(ctx, command.args);
     case "meeting.createTask": return meeting.createTask(ctx, command.args);
     case "meeting.close": return meeting.close(ctx, command.args);
+    case "meeting.delete": return meeting.remove(ctx, command.args);
+    case "meeting.restore": return meeting.restore(ctx, command.args);
   }
 }

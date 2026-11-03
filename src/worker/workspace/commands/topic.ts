@@ -17,7 +17,7 @@ export function emitTopic(ctx: CommandContext, id: string) {
 /** A Topic may point at a Task, which must be in the Topic's Project. */
 function checkRef(ctx: CommandContext, ref: { type: "task"; id: string } | null | undefined, projectId: string) {
   if (!ref) return;
-  const task = one(ctx.sql, toTask, "SELECT * FROM tasks WHERE id = ?", ref.id);
+  const task = one(ctx.sql, toTask, "SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL", ref.id);
   if (!task) throw new CommandError("not_found", "Referenced Task not found");
   if (task.projectId !== projectId) throw new CommandError("invalid", "Referenced Task belongs to another Project");
 }

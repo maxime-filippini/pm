@@ -134,7 +134,7 @@ activity    (id TEXT PK, at INT, actor_id TEXT, via TEXT NULL, kind TEXT,
 - **Feature status**: any status may change to any other, but each change is recorded in Activity. Moving to `accepted` or `rejected` sets `decided_by` and `decided_at`. `done` is only ever set by a Member. When the last open Task of an `accepted` Feature reaches `done`/`canceled`, the Feature shows a "Mark Feature done?" prompt.
 - **Feature/Task linkage**: a Task may reference a Feature only from the same Project. Any Feature status is allowed, but the UI suggests accepted ones.
 - **Task status**: moving to `done` sets `completed_at`, and moving away from it clears it.
-- **No hard delete** for Features, Tasks or Projects. Comments can be edited and deleted by their author only. Topics can be edited by anyone, and deleted only by their author while unresolved.
+- **No hard delete** for Features, Tasks or Projects. Tasks and Meetings can be **soft deleted** (hidden everywhere, restorable): a deleted Task keeps its number, and deleting a Meeting closes it if open and puts the Topics resolved in it back on the agenda (restoring puts their Outcomes back unless they were resolved again since). Comments can be edited and deleted by their author only. Topics can be edited by anyone, and deleted only by their author while unresolved.
 - **Meetings**: Topics and Meetings belong to a Project. At most one open Meeting (`ended_at IS NULL`) per Project. While a Meeting is open, its agenda is every unresolved Topic of that Project, including ones added during it. Recording an Outcome resolves the Topic within the open Meeting. An Outcome can only be recorded while a Meeting is open, and can be cleared again before it closes. Attendees default to all active Members when the Meeting starts. Closing a Meeting leaves Topics without an Outcome unresolved, so they carry over. A Topic may reference a Task in the same Project. Topics resolved in a closed Meeting are read-only.
 - **Pull Request links**: a URL must match `https://github.com/{owner}/{repo}/pull/{number}`. A Task can have several, and the same PR can be linked to several Tasks.
 
@@ -198,6 +198,7 @@ Every command runs as `(actor: Member, via?: string, args)`. It validates, then 
 | `pr.link` | `id, taskId, url` | triggers a fetch |
 | `pr.unlink` | `id` | |
 | `pr.refresh` | `taskId` | sent by the client when a Task detail opens; fetches only links with `fetched_at` older than 60 s |
+| `task.delete` / `task.restore` | `id` | soft delete |
 | `topic.create` | `id, projectId, title, body?, ref?` | `ref` is `{ type: "task", id }` in the same Project |
 | `topic.update` | `id, title?, body?, ref?` | |
 | `topic.move` | `id, rank` | |
@@ -208,6 +209,7 @@ Every command runs as `(actor: Member, via?: string, args)`. It validates, then 
 | `meeting.clearOutcome` | `topicId` | open Meeting only, Topic resolved in this Meeting |
 | `meeting.createTask` | `topicId, taskId, title, assigneeId?` | open Meeting only; creates the Task and appends "Created WEB-12 for Alice" to the Topic's Outcome in one transaction |
 | `meeting.close` | `id` | |
+| `meeting.delete` / `meeting.restore` | `id` | soft delete; see domain rules |
 
 Admin operations (`workspace.create`, `member.add`, `member.remove`, `member.rename`) are Worker HTTP endpoints under `/api/admin`. They write to D1 and then call an RPC method on the DO to update its `members` mirror. Removing a Member marks them inactive and closes their sockets.
 

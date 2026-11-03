@@ -32,6 +32,9 @@ export const commandSchemas = {
   }),
   "task.setStatus": z.object({ id: Id, status: TaskStatus }),
   "task.move": z.object({ id: Id, rank: Rank }),
+  /** Soft delete: hidden everywhere, number not reused, restorable. */
+  "task.delete": z.object({ id: Id }),
+  "task.restore": z.object({ id: Id }),
   "topic.create": z.object({ id: Id, projectId: Id, title: Title, body: Description.optional(), ref: TopicRef.optional() }),
   "topic.update": z.object({ id: Id, title: Title.optional(), body: Description.optional(), ref: TopicRef.optional() }),
   "topic.move": z.object({ id: Id, rank: Rank }),
@@ -43,6 +46,9 @@ export const commandSchemas = {
   /** Create a Task from a Topic during the open Meeting and note it in the Topic's Outcome. */
   "meeting.createTask": z.object({ topicId: Id, taskId: Id, title: Title, assigneeId: Id.nullish() }),
   "meeting.close": z.object({ id: Id }),
+  /** Soft delete. Topics resolved in it go back on the agenda; restore puts their Outcomes back. */
+  "meeting.delete": z.object({ id: Id }),
+  "meeting.restore": z.object({ id: Id }),
 } as const;
 
 export type CommandName = keyof typeof commandSchemas;

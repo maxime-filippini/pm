@@ -55,6 +55,13 @@ export const migrations: string[] = [
   CREATE INDEX topics_project ON topics(project_id, rank);
   CREATE UNIQUE INDEX meetings_one_open_per_project ON meetings(project_id) WHERE ended_at IS NULL;
   `,
+  // 3: soft delete for Tasks and Meetings (hidden everywhere, restorable)
+  `
+  ALTER TABLE tasks ADD COLUMN deleted_at INTEGER;
+  ALTER TABLE tasks ADD COLUMN deleted_by TEXT;
+  ALTER TABLE meetings ADD COLUMN deleted_at INTEGER;
+  ALTER TABLE meetings ADD COLUMN deleted_by TEXT;
+  `,
 ];
 
 export function migrate(sql: SqlStorage): void {

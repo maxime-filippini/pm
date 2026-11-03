@@ -5,8 +5,9 @@ import { CommandContext, CommandError } from "../context";
 import { one, toFeature, toMember, toTask } from "../rows";
 import { getProject } from "./project";
 
+/** A live (not deleted) Task. */
 function getTask(ctx: CommandContext, id: string) {
-  const task = one(ctx.sql, toTask, "SELECT * FROM tasks WHERE id = ?", id);
+  const task = one(ctx.sql, toTask, "SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL", id);
   if (!task) throw new CommandError("not_found", "Task not found");
   return task;
 }
@@ -102,4 +103,23 @@ export function move(ctx: CommandContext, args: CommandArgs<"task.move">) {
   // Reordering is frequent and low-signal: no Activity entry.
   ctx.sql.exec("UPDATE tasks SET rank = ?, updated_at = ? WHERE id = ?", args.rank, ctx.now, task.id);
   emitTask(ctx, task.id);
+}
+
+export function remove(ctx: CommandContext, args: CommandArgs<"task.delete">) {
+  const row = ctx.sql.exec<{ deleted_at: number | null }>("SELECT deleted_at FROM tasks WHERE id = ?", args.id).toArray()[0];
+  if (!row) throw new CommandError("not_found", "Task not found");
+  if (row.deleted_at !== null) return; // already deleted
+  const task = getTask(ctx, args.id);
+  ctx.sql.exec("UPDATE tasks SET deleted_at = ?, deleted_by = ? WHERE id = ?", ctx.now, ctx.actorId, task.id);
+  ctx.activity("task.deleted", "task", task.id, { title: task.title, number: task.number, projectId: task.projectId });
+  ctx.emit({ entity: "task", op: "delete", row: { id: task.id } });
+}
+
+export function restore(ctx: CommandContext, args: CommandArgs<"task.restore">) {
+  const row = ctx.sql.exec<{ deleted_at: number | null }>("SELECT deleted_at FROM tasks WHERE id = ?", args.id).toArray()[0];
+  if (!row) throw new CommandError("not_found", "Task not found");
+  if (row.deleted_at === null) return; // not deleted
+  ctx.sql.exec("UPDATE tasks SET deleted_at = NULL, deleted_by = NULL WHERE id = ?", args.id);
+  ctx.activity("task.restored", "task", args.id);
+  emitTask(ctx, args.id);
 }
