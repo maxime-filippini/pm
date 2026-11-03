@@ -67,7 +67,7 @@ Work breakdown for [`spec.md`](./spec.md), grouped by milestone (§11). A checke
 - [x] Comments: `comment.create/edit/delete` (edit/delete author-only), `comments.list` query, live changes applied only when loaded
 - [x] Activity feed view (paged `activity.list`) and per-item Activity; tuple cursors and durable Restore actions (spec §5)
 - [ ] Presence (viewing/editing) and "changed while you were editing" warning
-- [ ] Markdown fields: textarea + live preview, `react-markdown` without HTML, Task keys auto-linked
+- [x] Markdown fields: textarea + live preview, `react-markdown` without HTML, Task keys auto-linked
 - [ ] ⌘K quick-jump + `search` query (SQL `LIKE`), mobile search button
 - [ ] `manifest.webmanifest` + icons, `display: standalone`
 - [ ] `GET /api/w/:slug/export`

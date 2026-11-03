@@ -1,3 +1,4 @@
+import { Markdown, MarkdownInput } from "@/components/Markdown";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { Comments } from "@/components/Comments";
 import { Link, useParams } from "@tanstack/react-router";
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Textarea } from "@/components/ui/textarea";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
 import { EditableText } from "@/components/EditableText";
@@ -79,7 +79,7 @@ export function FeaturePage() {
     </label>
     {feature.decidedBy && feature.decidedAt !== null && <p className="text-xs text-muted-foreground">Last decision by {members[feature.decidedBy]?.name ?? "someone"} on {new Date(feature.decidedAt).toLocaleString()}</p>}
     <FeatureDonePrompt feature={feature} />
-    <Card className="gap-2 px-4"><h2 className="font-semibold">Description</h2><EditableText value={feature.description} multiline onSave={(description) => socket.send("feature.update", { id: feature.id, description })} render={(p) => <Textarea {...p} aria-label="Feature description" placeholder="Describe the proposal…" className="min-h-32" />} /></Card>
+    <Card className="gap-2 px-4"><h2 className="font-semibold">Description</h2><EditableText value={feature.description} multiline onSave={(description) => socket.send("feature.update", { id: feature.id, description })} render={(p) => <MarkdownInput {...p} aria-label="Feature description" placeholder="Describe the proposal…" className="min-h-32" />} /></Card>
     <section className="space-y-3"><h2 className="font-semibold">Tasks ({linked.length})</h2>
       {project.archivedAt === null && <form className="space-y-2" onSubmit={(e) => {
         e.preventDefault();

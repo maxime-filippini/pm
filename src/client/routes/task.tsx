@@ -1,3 +1,4 @@
+import { Markdown, MarkdownInput } from "@/components/Markdown";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { Comments } from "@/components/Comments";
 import { Link, Navigate, useCanGoBack, useNavigate, useParams, useRouter } from "@tanstack/react-router";
@@ -11,7 +12,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Textarea } from "@/components/ui/textarea";
 import { FEATURE_LABEL, FeatureDonePrompt } from "./features";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
@@ -106,7 +106,7 @@ export function TaskPage() {
         <EditableText
           value={task.description}
           onSave={(description) => socket.send("task.update", { id: task.id, description })}
-          render={(p) => <Textarea {...p} placeholder="Add a description…" className="min-h-32" />}
+          render={(p) => <MarkdownInput {...p} placeholder="Add a description…" className="min-h-32" />}
           multiline
         />
       </Card>
