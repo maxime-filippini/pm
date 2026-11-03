@@ -1,7 +1,7 @@
 import { Viewing } from "@/components/Presence";
 import { ConcurrentDraft } from "@/components/ConcurrentDraft";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate, useParams } from "@tanstack/react-router";
 import {
   CheckCircle2Icon,
   ChevronRightIcon,
@@ -15,7 +15,7 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type Meeting, type Project, type Task, type TaskStatus, type Topic, TASK_STATUSES, taskKey } from "../../shared/entities";
 import { uuidv7 } from "../../shared/ids";
 import { byRank } from "../../shared/rank";
@@ -70,7 +70,20 @@ const date = (at: number) => new Date(at).toLocaleDateString([], { weekday: "sho
 
 // ---- Page ----
 
+function useTopicFocus() {
+  const hash = useLocation({ select: (location) => location.hash });
+  useEffect(() => {
+    const focus = () => {
+      const id = decodeURIComponent(hash.replace(/^#/, ""));
+      if (!id.startsWith("topic-")) return;
+      const element = document.getElementById(id);
+      if (element) { element.tabIndex = -1; element.focus(); element.scrollIntoView({ block: "center" }); }
+    };
+    focus();
+  }, [hash]);
+}
 export function ProjectMeetingsPage() {
+  useTopicFocus();
   const { slug, key } = useParams({ from: "/w/$slug/p/$key/meetings" });
   const project = useProject(key);
   const open = useOpenMeeting(project?.id);
@@ -594,6 +607,7 @@ function PastMeetings({ slug, project }: { slug: string; project: Project }) {
 }
 
 export function PastMeetingPage() {
+  useTopicFocus();
   const { slug, key, meetingId } = useParams({ from: "/w/$slug/p/$key/meetings/$meetingId" });
   const navigate = useNavigate();
   const project = useProject(key);

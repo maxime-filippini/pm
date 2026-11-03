@@ -68,7 +68,7 @@ Work breakdown for [`spec.md`](./spec.md), grouped by milestone (§11). A checke
 - [x] Activity feed view (paged `activity.list`) and per-item Activity; tuple cursors and durable Restore actions (spec §5)
 - [x] Presence (viewing/editing) and "changed while you were editing" warning
 - [x] Markdown fields: textarea + live preview, `react-markdown` without HTML, Task keys auto-linked
-- [ ] ⌘K quick-jump + `search` query (SQL `LIKE`), mobile search button
+- [x] ⌘K quick-jump + `search` query (SQL `LIKE`), mobile search button
 - [ ] `manifest.webmanifest` + icons, `display: standalone`
 - [ ] `GET /api/w/:slug/export`
 

@@ -133,3 +133,5 @@ export type Change = {
 export function taskKey(project: Pick<Project, "key">, task: Pick<Task, "number">): string {
   return `${project.key}-${task.number}`;
 }
+
+export type SearchResult = { type: "task" | "feature" | "topic"; id: string; title: string; projectId: string; projectKey: string; taskNumber?: number; meetingId?: string | null };

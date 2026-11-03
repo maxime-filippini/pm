@@ -1,3 +1,4 @@
+import type { SearchResult } from "../../shared/entities";
 import type { z } from "zod";
 import { querySchemas, type CommentsPage } from "../../shared/protocol";
 import { requireCommentTarget } from "./commands/comment";
@@ -43,4 +44,33 @@ export function commentsList(sql: SqlStorage, args: z.infer<typeof querySchemas[
   const items = rows.slice(0, args.limit);
   const last = items.at(-1);
   return { items, nextCursor: rows.length > args.limit && last ? { createdAt: last.createdAt, id: last.id } : null };
+}
+
+/** Escape LIKE metacharacters so search text is always literal. */
+export function search(sql: SqlStorage, args: z.infer<typeof querySchemas["search"]>): { items: SearchResult[] } {
+  const escaped = args.text.replace(/[\\%_]/g, (char) => "\\" + char);
+  const prefix = escaped + "%", contains = "%" + escaped + "%";
+  const rows = sql.exec<{
+    type: SearchResult["type"]; id: string; title: string; project_id: string; project_key: string;
+    task_number: number | null; meeting_id: string | null; score: number;
+  }>(`
+    SELECT 'task' AS type, t.id AS id, t.title AS title, p.id AS project_id, p.key AS project_key, t.number AS task_number, NULL AS meeting_id,
+      CASE WHEN (p.key || '-' || t.number) = ? COLLATE NOCASE THEN 0 WHEN t.title LIKE ? ESCAPE '\\' THEN 1 ELSE 2 END AS score
+      FROM tasks t JOIN projects p ON p.id = t.project_id
+      WHERE p.archived_at IS NULL AND t.deleted_at IS NULL AND ((p.key || '-' || t.number) = ? COLLATE NOCASE OR t.title LIKE ? ESCAPE '\\')
+    UNION ALL
+    SELECT 'feature', f.id, f.title, p.id, p.key, NULL, NULL, CASE WHEN f.title LIKE ? ESCAPE '\\' THEN 1 ELSE 2 END
+      FROM features f JOIN projects p ON p.id = f.project_id
+      WHERE p.archived_at IS NULL AND f.title LIKE ? ESCAPE '\\'
+    UNION ALL
+    SELECT 'topic', t.id, t.title, p.id, p.key, NULL, t.resolved_in_meeting_id, CASE WHEN t.title LIKE ? ESCAPE '\\' THEN 1 ELSE 2 END
+      FROM topics t JOIN projects p ON p.id = t.project_id LEFT JOIN meetings m ON m.id = t.resolved_in_meeting_id
+      WHERE p.archived_at IS NULL AND (t.resolved_in_meeting_id IS NULL OR (m.id IS NOT NULL AND m.deleted_at IS NULL)) AND t.title LIKE ? ESCAPE '\\'
+    ORDER BY score, type, id LIMIT ?`,
+    args.text, prefix, args.text, contains, prefix, contains, prefix, contains, args.limit).toArray();
+  return { items: rows.map((r) => ({
+    type: r.type, id: r.id, title: r.title, projectId: r.project_id, projectKey: r.project_key,
+    ...(r.type === "task" && { taskNumber: r.task_number! }),
+    ...(r.type === "topic" && { meetingId: r.meeting_id }),
+  })) };
 }

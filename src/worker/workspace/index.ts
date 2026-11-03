@@ -5,7 +5,7 @@ import type { Change, Presence } from "../../shared/entities";
 import { ClientMessage, querySchemas, type QueryName, type ServerMessage } from "../../shared/protocol";
 import { apply } from "./commands";
 import { CommandContext, CommandError } from "./context";
-import { activityList, commentsList, snapshot } from "./queries";
+import { activityList, commentsList, search, snapshot } from "./queries";
 import { one, toMember } from "./rows";
 import { migrate } from "./schema";
 
@@ -142,6 +142,7 @@ export class WorkspaceDO extends DurableObject<Env> {
     try {
       let data: unknown;
       switch (name as QueryName) {
+        case "search": data = search(this.sql, querySchemas.search.parse(args ?? {})); break;
         case "activity.list": data = activityList(this.sql, querySchemas["activity.list"].parse(args ?? {})); break;
         case "comments.list": data = commentsList(this.sql, querySchemas["comments.list"].parse(args ?? {})); break;
       }
