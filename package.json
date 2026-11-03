@@ -11,7 +11,7 @@
     "cf-typegen": "wrangler types src/worker/worker-configuration.d.ts",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "deploy": "vite build && wrangler d1 migrations apply DB --remote && wrangler deploy"
+    "deploy": "vite build && wrangler d1 migrations apply DB --remote && wrangler deploy --var ACCESS_TEAM_DOMAIN:maxime-filippini.cloudflareaccess.com --var ACCESS_AUD:5fe3e24c59fba6ebdef5917dd0e8d9c59e3faa30e51ca0789c611c64413e3e5b"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.46",

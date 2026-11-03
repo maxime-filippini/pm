@@ -1,4 +1,2 @@
 # Local dev identity. Stands in for the Access JWT. Never set in production.
 DEV_ACCESS_EMAIL=maxime.filippini@gmail.com
-# Local dev must not set ACCESS_AUD (the Worker fails closed if both are set).
-ACCESS_AUD=

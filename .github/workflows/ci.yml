@@ -44,8 +44,5 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - name: Apply D1 migrations
-        run: pnpm exec wrangler d1 migrations apply DB --remote
-      - name: Deploy Worker
-        run: pnpm exec wrangler deploy
+      - name: Build, migrate D1, deploy
+        run: pnpm run deploy

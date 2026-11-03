@@ -25,9 +25,9 @@
     "bindings": [{ "name": "WORKSPACE", "class_name": "WorkspaceDO" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorkspaceDO"] }],
+  // ACCESS_TEAM_DOMAIN and ACCESS_AUD are passed only at deploy time (see the "deploy"
+  // script), so local dev never sees them and DEV_ACCESS_EMAIL cannot trip the fail-closed check.
   "vars": {
-    "ACCESS_TEAM_DOMAIN": "maxime-filippini.cloudflareaccess.com",
-    "ACCESS_AUD": "5fe3e24c59fba6ebdef5917dd0e8d9c59e3faa30e51ca0789c611c64413e3e5b",
     "ADMIN_EMAILS": "maxime.filippini@gmail.com"
   }
 }
