@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { FEATURE_LABEL, FeatureDonePrompt } from "./features";
+import { FEATURE_LABEL, FeatureDonePrompt } from "@/components/FeatureProgress";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
 
