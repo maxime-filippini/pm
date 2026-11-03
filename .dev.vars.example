@@ -1,2 +1,5 @@
 # Local dev identity. Stands in for the Access JWT. Never set in production.
 DEV_ACCESS_EMAIL=maxime.filippini@gmail.com
+
+# GitHub integration also requires GITHUB_TOKEN_KEY, a private base64-encoded
+# 32-byte AES key supplied through the private secret mechanism. Do not commit it.

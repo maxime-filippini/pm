@@ -1,3 +1,4 @@
+import { ProjectSettingsPage } from "./routes/settings";
 import { ActivityPage } from "./routes/activity";
 import { createRootRoute, createRoute, createRouter, Link, Outlet, RouterProvider, useParams } from "@tanstack/react-router";
 import { StrictMode } from "react";
@@ -41,6 +42,7 @@ const workspaceRoute = createRoute({ getParentRoute: () => rootRoute, path: "/w/
 const activityRoute = createRoute({ getParentRoute: () => workspaceRoute, path: "/activity", component: ActivityPage });
 const projectsRoute = createRoute({ getParentRoute: () => workspaceRoute, path: "/", component: ProjectsPage });
 const projectRoute = createRoute({ getParentRoute: () => workspaceRoute, path: "/p/$key", component: ProjectLayout });
+const settingsRoute = createRoute({ getParentRoute: () => projectRoute, path: "/settings", component: ProjectSettingsPage });
 const projectTasksRoute = createRoute({ getParentRoute: () => projectRoute, path: "/", component: ProjectTasksPage });
 const projectMyTasksRoute = createRoute({ getParentRoute: () => projectRoute, path: "/me", component: ProjectMyTasksPage });
 const taskRoute = createRoute({ getParentRoute: () => projectRoute, path: "/t/$number", component: TaskPage });
@@ -58,7 +60,7 @@ const routeTree = rootRoute.addChildren([
   workspaceRoute.addChildren([
     projectsRoute,
     activityRoute,
-    projectRoute.addChildren([projectTasksRoute, projectMyTasksRoute, taskRoute, featuresRoute, featureRoute, meetingsRoute, pastMeetingRoute]),
+    projectRoute.addChildren([settingsRoute,projectTasksRoute, projectMyTasksRoute, taskRoute, featuresRoute, featureRoute, meetingsRoute, pastMeetingRoute]),
     taskKeyRoute,
     myTasksRoute,
   ]),

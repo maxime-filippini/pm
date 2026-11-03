@@ -87,11 +87,12 @@ Topics and Meetings are per Project (a "Meetings" tab next to Tasks / My Tasks).
 - [ ] Route-based code splitting: reduce the initial bundle and verify navigation/loading/error states (handoff step 9)
 
 ## M4: GitHub
-- [ ] `GITHUB_TOKEN_KEY` secret; AES-GCM encrypt/decrypt; `project.setGithubToken` (clears `fetch_error`s), `hasGithubToken`
-- [ ] `pr.link/unlink/refresh`, URL validation, state + error mapping, 5 s timeout, 60 s staleness
-- [ ] PR badges on Task detail, "PR merged — mark Done?" prompt
-- [ ] Project settings view (rename, archive, token with guidance)
-- [ ] Tests: state mapping, error mapping with mocked `fetch`
+- [x] AES-GCM encrypt/decrypt; `project.setGithubToken` (clears `fetch_error`s), `hasGithubToken`
+- [ ] Provision private `GITHUB_TOKEN_KEY` in preview and production (see `docs/github.md`; implementation uses public test fixtures only)
+- [x] `pr.link/unlink/refresh`, URL validation, state + error mapping, 5 s timeout, 60 s staleness
+- [x] PR badges on Task detail, "PR merged — mark Done?" prompt
+- [x] Project settings view (rename, archive, token with guidance)
+- [x] Tests: state mapping, error mapping with mocked `fetch`
 
 ## M5: Agents (designed, built after v1)
 - [ ] MCP server over the command set, Access Managed OAuth (fallback `workers-oauth-provider`), `via` attribution

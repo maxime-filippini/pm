@@ -1,3 +1,5 @@
+import { encryptToken, decryptToken } from "./crypto";
+import { fetchPullRequest } from "./github";
 import { exportWorkspace } from "./export";
 import { ZodError } from "zod";
 import { DurableObject } from "cloudflare:workers";
@@ -7,7 +9,7 @@ import { ClientMessage, querySchemas, type QueryName, type ServerMessage } from 
 import { apply } from "./commands";
 import { CommandContext, CommandError } from "./context";
 import { activityList, commentsList, search, snapshot } from "./queries";
-import { one, toMember } from "./rows";
+import { all, one, toPullRequestLink, toMember } from "./rows";
 import { migrate } from "./schema";
 
 /** Headers the Worker sets after authenticating. The DO trusts only these (spec §3). */
@@ -105,34 +107,67 @@ export class WorkspaceDO extends DurableObject<Env> {
    * Validate, apply all writes in one synchronous transaction, record Activity, bump
    * version, broadcast. Exposed for the future API/MCP surface.
    */
-  execute(actorId: string, via: string | null, name: string, args: unknown, commandId?: string):
+  async execute(actorId: string, via: string | null, name: string, args: unknown, commandId?: string): Promise<
     | { ok: true; version: number; changes: Change[] }
-    | { ok: false; error: { code: CommandError["code"]; message: string } } {
+    | { ok: false; error: { code: CommandError["code"]; message: string } }> {
     const parsed = parseCommand(name, args);
     if (!parsed.ok) return { ok: false, error: { code: "invalid", message: parsed.message } };
 
     const actor = one(this.sql, toMember, "SELECT * FROM members WHERE id = ?", actorId);
     if (!actor?.active) return { ok: false, error: { code: "forbidden", message: "Not an active Member" } };
 
-    const ctx = new CommandContext(this.sql, actorId, via, Date.now());
     try {
+      let preparedToken: string | null | undefined;
+      if (parsed.command.name === "project.setGithubToken") {
+        preparedToken = parsed.command.args.token === null ? null : await encryptToken(parsed.command.args.token, this.env.GITHUB_TOKEN_KEY);
+        // Encryption yields; membership may have changed meanwhile.
+        if (!one(this.sql, toMember, "SELECT * FROM members WHERE id = ?", actorId)?.active) throw new CommandError("forbidden", "Not an active Member");
+      }
+      const ctx = new CommandContext(this.sql, actorId, via, Date.now(), preparedToken);
       this.ctx.storage.transactionSync(() => {
         apply(ctx, parsed.command);
         if (ctx.changes.length > 0) this.bumpVersion();
       });
+      const version = this.version();
+      if (ctx.changes.length > 0) this.broadcast({ type: "change", version, cause: commandId, changes: ctx.changes });
+      if (parsed.command.name === "pr.link" || parsed.command.name === "pr.refresh") await this.refreshPullRequests(parsed.command.args.taskId, actorId, via);
+      return { ok: true, version: this.version(), changes: ctx.changes };
     } catch (e) {
       if (e instanceof CommandError) return { ok: false, error: { code: e.code, message: e.message } };
-      console.error("command failed", name, e);
+      console.error("command failed", name);
       return { ok: false, error: { code: "internal", message: "Something went wrong" } };
     }
 
-    const version = this.version();
-    if (ctx.changes.length > 0) this.broadcast({ type: "change", version, cause: commandId, changes: ctx.changes });
-    return { ok: true, version, changes: ctx.changes };
   }
 
-  private handleCommand(ws: WebSocket, memberId: string, id: string, name: string, args: unknown) {
-    const result = this.execute(memberId, null, name, args, id);
+  private async refreshPullRequests(taskId: string, actorId: string, via: string | null) {
+    const project = this.sql.exec<{ github_token_enc: string | null }>("SELECT p.github_token_enc FROM projects p JOIN tasks t ON t.project_id = p.id WHERE t.id = ? AND t.deleted_at IS NULL", taskId).toArray()[0];
+    if (!project) return;
+    const encrypted = project.github_token_enc;
+    let token: string | null = null;
+    let decryptionFailed = false;
+    try { if (encrypted) token = await decryptToken(encrypted, this.env.GITHUB_TOKEN_KEY); } catch { decryptionFailed = true; }
+    const links = all(this.sql, toPullRequestLink, "SELECT * FROM pull_request_links WHERE task_id = ? AND (fetched_at IS NULL OR fetched_at <= ?)", taskId, Date.now() - 60_000);
+    await Promise.all(links.map(async (link) => {
+      const result = decryptionFailed ? { title: null, state: null, fetchError: "unavailable" as const } : await fetchPullRequest(link, token);
+      this.ctx.storage.transactionSync(() => {
+        const current = one(this.sql, toPullRequestLink, "SELECT * FROM pull_request_links WHERE id = ?", link.id);
+        const currentProject = this.sql.exec<{ github_token_enc: string | null }>("SELECT p.github_token_enc FROM projects p JOIN tasks t ON t.project_id = p.id WHERE t.id = ? AND t.deleted_at IS NULL", taskId).toArray()[0];
+        if (!current || current.createdAt !== link.createdAt || current.fetchedAt !== link.fetchedAt || !currentProject || currentProject.github_token_enc !== encrypted) return;
+        const now = Date.now();
+        this.sql.exec("UPDATE pull_request_links SET title = ?, state = ?, fetch_error = ?, fetched_at = ? WHERE id = ?",
+          result.title ?? current.title, result.state ?? current.state, result.fetchError, now, link.id);
+        const ctx = new CommandContext(this.sql, actorId, via, now);
+        if (current.state !== result.state || current.fetchError !== result.fetchError) ctx.activity("pr.state", "task", taskId, { url: current.url, state: result.state, error: result.fetchError });
+        ctx.emit({ entity: "pullRequestLink", op: "upsert", row: one(this.sql, toPullRequestLink, "SELECT * FROM pull_request_links WHERE id = ?", link.id)! });
+        this.bumpVersion();
+        this.broadcast({ type: "change", version: this.version(), changes: ctx.changes });
+      });
+    }));
+  }
+
+  private async handleCommand(ws: WebSocket, memberId: string, id: string, name: string, args: unknown) {
+    const result = await this.execute(memberId, null, name, args, id);
     this.send(ws, result.ok ? { type: "ack", id } : { type: "reject", id, error: result.error });
   }
 

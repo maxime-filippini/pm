@@ -1,3 +1,4 @@
+import { parsePullRequestUrl } from "../../shared/github";
 import type { Command } from "../../shared/commands";
 import { type Feature, type Meeting, type Project, type Task, type Topic, taskKey } from "../../shared/entities";
 import { generateKeyBetween } from "fractional-indexing";
@@ -9,6 +10,21 @@ import type { Data } from "../store/workspace";
  */
 export function applyOptimistic(data: Data, command: Command, memberId: string, now: number): Data {
   switch (command.name) {
+    case "project.setGithubToken":
+      return patchProject(data, command.args.id, { hasGithubToken: command.args.token !== null });
+    case "pr.refresh":
+      return data;
+    case "pr.link": {
+      const a = command.args;
+      if (!data.tasks[a.taskId] || data.pullRequestLinks[a.id] || Object.values(data.pullRequestLinks).some((link) => link.taskId === a.taskId && link.url === a.url)) return data;
+      return { ...data, pullRequestLinks: { ...data.pullRequestLinks, [a.id]: {
+        id: a.id, taskId: a.taskId, ...parsePullRequestUrl(a.url), title: null, state: null, fetchedAt: null, fetchError: null, createdBy: memberId, createdAt: now,
+      } } };
+    }
+    case "pr.unlink": {
+      const { [command.args.id]: _, ...pullRequestLinks } = data.pullRequestLinks;
+      return { ...data, pullRequestLinks };
+    }
     case "comment.create":
     case "comment.edit":
     case "comment.delete":
@@ -96,7 +112,7 @@ export function applyOptimistic(data: Data, command: Command, memberId: string, 
       return patchTask(data, command.args.id, { rank: command.args.rank });
     case "task.delete": {
       const { [command.args.id]: _, ...tasks } = data.tasks;
-      return { ...data, tasks };
+      return { ...data, tasks, pullRequestLinks: Object.fromEntries(Object.entries(data.pullRequestLinks).filter(([, link]) => link.taskId !== command.args.id)) };
     }
     // Restores need the hidden row, which only the server has: wait for its change.
     case "task.restore":
