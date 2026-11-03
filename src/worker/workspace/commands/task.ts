@@ -2,7 +2,7 @@ import { generateKeyBetween } from "fractional-indexing";
 import type { CommandArgs } from "../../../shared/commands";
 import type { Task } from "../../../shared/entities";
 import { CommandContext, CommandError } from "../context";
-import { one, toFeature, toMember, toTask } from "../rows";
+import { all, one, toPullRequestLink, toFeature, toMember, toTask } from "../rows";
 import { getProject } from "./project";
 
 /** A live (not deleted) Task. */
@@ -113,6 +113,7 @@ export function remove(ctx: CommandContext, args: CommandArgs<"task.delete">) {
   ctx.sql.exec("UPDATE tasks SET deleted_at = ?, deleted_by = ? WHERE id = ?", ctx.now, ctx.actorId, task.id);
   ctx.activity("task.deleted", "task", task.id, { title: task.title, number: task.number, projectId: task.projectId });
   ctx.emit({ entity: "task", op: "delete", row: { id: task.id } });
+  for (const row of all(ctx.sql, toPullRequestLink, "SELECT * FROM pull_request_links WHERE task_id = ?", task.id)) ctx.emit({ entity: "pullRequestLink", op: "delete", row: { id: row.id } });
 }
 
 export function restore(ctx: CommandContext, args: CommandArgs<"task.restore">) {
@@ -122,4 +123,5 @@ export function restore(ctx: CommandContext, args: CommandArgs<"task.restore">) 
   ctx.sql.exec("UPDATE tasks SET deleted_at = NULL, deleted_by = NULL WHERE id = ?", args.id);
   ctx.activity("task.restored", "task", args.id);
   emitTask(ctx, args.id);
+  for (const row of all(ctx.sql, toPullRequestLink, "SELECT * FROM pull_request_links WHERE task_id = ?", args.id)) ctx.emit({ entity: "pullRequestLink", op: "upsert", row });
 }

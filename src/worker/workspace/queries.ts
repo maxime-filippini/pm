@@ -3,7 +3,7 @@ import type { z } from "zod";
 import { querySchemas, type CommentsPage } from "../../shared/protocol";
 import { requireCommentTarget } from "./commands/comment";
 import type { Snapshot } from "../../shared/protocol";
-import { all, GROUP_BY_MEETING, MEETING_SELECT, toComment, toActivity, toFeature, toMeeting, toMember, toProject, toTask, toTopic } from "./rows";
+import { all, GROUP_BY_MEETING, MEETING_SELECT, toComment, toPullRequestLink, toActivity, toFeature, toMeeting, toMember, toProject, toTask, toTopic } from "./rows";
 
 export function snapshot(sql: SqlStorage): Snapshot {
   return {
@@ -12,6 +12,7 @@ export function snapshot(sql: SqlStorage): Snapshot {
     features: all(sql, toFeature, "SELECT * FROM features"),
     tasks: all(sql, toTask, "SELECT * FROM tasks WHERE deleted_at IS NULL ORDER BY rank"),
     topics: all(sql, toTopic, "SELECT * FROM topics ORDER BY rank"),
+    pullRequestLinks: all(sql, toPullRequestLink, "SELECT p.* FROM pull_request_links p JOIN tasks t ON t.id = p.task_id WHERE t.deleted_at IS NULL"),
     meetings: all(sql, toMeeting, `${MEETING_SELECT} WHERE m.deleted_at IS NULL ${GROUP_BY_MEETING} ORDER BY m.started_at`),
   };
 }

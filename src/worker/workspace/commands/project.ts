@@ -1,6 +1,6 @@
 import type { CommandArgs } from "../../../shared/commands";
 import { CommandContext, CommandError } from "../context";
-import { one, toProject } from "../rows";
+import { all, one, toPullRequestLink, toProject } from "../rows";
 
 export function getProject(ctx: CommandContext, id: string) {
   const project = one(ctx.sql, toProject, "SELECT * FROM projects WHERE id = ?", id);
@@ -40,4 +40,16 @@ export function setArchived(ctx: CommandContext, args: { id: string }, archived:
   ctx.sql.exec("UPDATE projects SET archived_at = ? WHERE id = ?", archived ? ctx.now : null, args.id);
   ctx.activity(archived ? "project.archived" : "project.unarchived", "project", args.id);
   emitProject(ctx, args.id);
+}
+
+
+export function setGithubToken(ctx: CommandContext, args: CommandArgs<"project.setGithubToken">) {
+  getProject(ctx, args.id);
+  if (ctx.preparedToken === undefined) throw new CommandError("internal", "Token was not prepared");
+  ctx.sql.exec("UPDATE projects SET github_token_enc = ? WHERE id = ?", ctx.preparedToken, args.id);
+  ctx.sql.exec("UPDATE pull_request_links SET fetch_error = NULL, fetched_at = NULL WHERE task_id IN (SELECT id FROM tasks WHERE project_id = ?)", args.id);
+  ctx.activity("project.github_token", "project", args.id);
+  ctx.emit({ entity: "project", op: "upsert", row: getProject(ctx, args.id) });
+  const links = all(ctx.sql, toPullRequestLink, "SELECT p.* FROM pull_request_links p JOIN tasks t ON t.id = p.task_id WHERE t.project_id = ? AND t.deleted_at IS NULL", args.id);
+  for (const row of links) ctx.emit({ entity: "pullRequestLink", op: "upsert", row });
 }

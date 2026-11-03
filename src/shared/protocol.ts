@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Activity, Presence, ActivityItem, Comment, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
+import type { Activity, PullRequestLink, Presence, ActivityItem, Comment, Change, Feature, Meeting, Member, Project, Task, Topic } from "./entities";
 import { Id, Ref, CommentTarget, ActivityTarget } from "./entities";
 
 // ---- Client → server ----
@@ -36,6 +36,7 @@ export type Snapshot = {
   /** All Topics, resolved or not: small, and past Meetings read them. */
   topics: Topic[];
   meetings: Meeting[];
+  pullRequestLinks: PullRequestLink[];
 };
 
 export type ErrorCode = "invalid" | "not_found" | "conflict" | "forbidden" | "internal";

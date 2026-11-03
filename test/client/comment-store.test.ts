@@ -4,7 +4,7 @@ import { useWorkspace, workspaceActions as actions } from "../../src/client/stor
 const target = { type: "task" as const, id: "task" };
 const key = "task:task";
 const row: Comment = { id: "c", targetType: "task", targetId: "task", authorId: "alice", via: null, body: "Original", createdAt: 1, editedAt: null };
-const snapshot = { members: [], projects: [], features: [], tasks: [], topics: [], meetings: [] };
+const snapshot = { members: [], projects: [], features: [], tasks: [], topics: [], meetings: [], pullRequestLinks: [] };
 const state = () => useWorkspace.getState();
 function page(items: Comment[], version = 1, cursor: { createdAt: number; id: string } | null = null) {
   actions.commentsPage(target, { items, nextCursor: cursor }, version, state().connectionEpoch, state().commentCollections[key]!.generation);

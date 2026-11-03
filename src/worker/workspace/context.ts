@@ -20,6 +20,7 @@ export class CommandContext {
     readonly actorId: string,
     readonly via: string | null,
     readonly now: number,
+    readonly preparedToken?: string | null,
   ) {}
 
   emit(change: Change): void {

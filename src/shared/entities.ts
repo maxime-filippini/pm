@@ -123,6 +123,7 @@ export type EntityMap = {
   meeting: Meeting;
   activity: Activity;
   comment: Comment;
+  pullRequestLink: PullRequestLink;
 };
 export type EntityName = keyof EntityMap;
 
@@ -135,3 +136,10 @@ export function taskKey(project: Pick<Project, "key">, task: Pick<Task, "number"
 }
 
 export type SearchResult = { type: "task" | "feature" | "topic"; id: string; title: string; projectId: string; projectKey: string; taskNumber?: number; meetingId?: string | null };
+
+export type PullRequestLink = {
+  id: string; taskId: string; url: string; owner: string; repo: string; number: number;
+  title: string | null; state: "draft" | "open" | "merged" | "closed" | null;
+  fetchedAt: number | null; fetchError: "no_token" | "unauthorized" | "not_found" | "unavailable" | null;
+  createdBy: string; createdAt: number;
+};

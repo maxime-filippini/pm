@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Command } from "../../shared/commands";
-import type { Activity, Presence, Comment, CommentTarget, Change, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
+import type { Activity, PullRequestLink, Presence, Comment, CommentTarget, Change, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
 import { commentChange, commentKey, commentPage, newCollection, projectComments, type CommentCollection } from "./comments";
 import type { CommentsPage, Snapshot } from "../../shared/protocol";
 import { applyOptimistic } from "../sync/optimistic";
@@ -12,6 +12,7 @@ export type Data = {
   tasks: Record<string, Task>;
   topics: Record<string, Topic>;
   meetings: Record<string, Meeting>;
+  pullRequestLinks: Record<string, PullRequestLink>;
 };
 
 export type Pending = { id: string; command: Command; at: number };
@@ -37,7 +38,7 @@ type State = {
   presence: Presence[];
 };
 
-const empty: Data = { members: {}, projects: {}, features: {}, tasks: {}, topics: {}, meetings: {} };
+const empty: Data = { members: {}, projects: {}, features: {}, tasks: {}, topics: {}, meetings: {}, pullRequestLinks: {} };
 
 function byId<T extends { id: string }>(rows: T[]): Record<string, T> {
   return Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -92,6 +93,7 @@ export const workspaceActions = {
         tasks: byId(data.tasks),
         topics: byId(data.topics),
         meetings: byId(data.meetings),
+        pullRequestLinks: byId(data.pullRequestLinks),
       },
     }));
   },

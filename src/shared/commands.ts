@@ -1,3 +1,4 @@
+import { PullRequestUrl } from "./github";
 import { z } from "zod";
 import { Id, ProjectKey, Rank, TaskStatus, FeatureStatus, CommentTarget } from "./entities";
 
@@ -10,6 +11,10 @@ const TopicRef = z.object({ type: z.literal("task"), id: Id }).nullable();
 
 /** Every command the Workspace DO accepts (spec §6). The same set will back the API and MCP server. */
 export const commandSchemas = {
+  "project.setGithubToken": z.object({ id: Id, token: z.string().trim().min(1).max(10_000).nullable() }),
+  "pr.link": z.object({ id: Id, taskId: Id, url: PullRequestUrl }),
+  "pr.unlink": z.object({ id: Id }),
+  "pr.refresh": z.object({ taskId: Id }),
   "comment.create": z.object({ id: Id, target: CommentTarget, body: CommentBody }),
   "comment.edit": z.object({ id: Id, body: CommentBody }),
   "comment.delete": z.object({ id: Id }),

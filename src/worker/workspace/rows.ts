@@ -1,4 +1,4 @@
-import type { Activity, Comment, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
+import type { Activity, PullRequestLink, Comment, Feature, Meeting, Member, Project, Task, Topic } from "../../shared/entities";
 
 // Raw SQLite rows → the camelCase shapes sent to clients. Never expose github_token_enc.
 
@@ -109,4 +109,10 @@ export function all<T>(sql: SqlStorage, map: (r: Row) => T, query: string, ...pa
 export const toComment = (r: Row): Comment => ({
   id: str(r.id), targetType: str(r.target_type) as Comment["targetType"], targetId: str(r.target_id),
   authorId: str(r.author_id), via: strOrNull(r.via), body: str(r.body), createdAt: num(r.created_at), editedAt: numOrNull(r.edited_at),
+});
+
+export const toPullRequestLink = (r: Row): PullRequestLink => ({
+  id: str(r.id), taskId: str(r.task_id), url: str(r.url), owner: str(r.owner), repo: str(r.repo), number: num(r.number),
+  title: strOrNull(r.title), state: strOrNull(r.state) as PullRequestLink["state"], fetchedAt: numOrNull(r.fetched_at),
+  fetchError: strOrNull(r.fetch_error) as PullRequestLink["fetchError"], createdBy: str(r.created_by), createdAt: num(r.created_at),
 });

@@ -52,6 +52,7 @@ function WorkspaceNav({ slug }: { slug: string }) {
 function ProjectNav({ slug, projectKey }: { slug: string; projectKey: string }) {
   const matchRoute = useMatchRoute();
   const params = { slug, key: projectKey };
+  const onSettings = Boolean(matchRoute({ to: "/w/$slug/p/$key/settings", params }));
   const onMyTasks = Boolean(matchRoute({ to: "/w/$slug/p/$key/me", params }));
   // On a Task neither tab is lit: you may have come from either list, and Back returns there.
   const onTasks = Boolean(matchRoute({ to: "/w/$slug/p/$key", params }));
@@ -63,7 +64,7 @@ function ProjectNav({ slug, projectKey }: { slug: string; projectKey: string }) 
   });
   return (
     <>
-      <ProjectSwitcher slug={slug} projectKey={projectKey} tab={onMyTasks ? "me" : onFeatures ? "features" : onMeetings ? "meetings" : "tasks"} />
+      <ProjectSwitcher slug={slug} projectKey={projectKey} tab={onSettings ? "settings" : onMyTasks ? "me" : onFeatures ? "features" : onMeetings ? "meetings" : "tasks"} />
       {/* On phones the tabs get their own row under the Project switcher. */}
       <div className="order-last -mx-1 flex w-full gap-1 sm:order-none sm:mx-0 sm:w-auto overflow-x-auto">
         <Link to="/w/$slug/p/$key" params={params} className={cn(tab, onTasks && activeTab)}>Tasks</Link>
@@ -73,12 +74,13 @@ function ProjectNav({ slug, projectKey }: { slug: string; projectKey: string }) 
           Meetings
           {meetingOpen && <span className="size-1.5 rounded-full bg-emerald-400" title="Meeting in progress" />}
         </Link>
+        <Link to="/w/$slug/p/$key/settings" params={params} className={cn(tab, onSettings && activeTab)}>Settings</Link>
       </div>
     </>
   );
 }
 
-function ProjectSwitcher({ slug, projectKey, tab }: { slug: string; projectKey: string; tab: "tasks" | "me" | "meetings" | "features" }) {
+function ProjectSwitcher({ slug, projectKey, tab }: { slug: string; projectKey: string; tab: "tasks" | "me" | "meetings" | "features" | "settings" }) {
   const navigate = useNavigate();
   const projects = useWorkspace((s) => s.view.projects);
   const options = useMemo(
@@ -90,7 +92,8 @@ function ProjectSwitcher({ slug, projectKey, tab }: { slug: string; projectKey: 
   // Switching Projects keeps you on the same tab.
   const open = (key: string) => {
     const params = { slug, key };
-    if (tab === "me") navigate({ to: "/w/$slug/p/$key/me", params });
+    if (tab === "settings") navigate({ to: "/w/$slug/p/$key/settings", params });
+    else if (tab === "me") navigate({ to: "/w/$slug/p/$key/me", params });
     else if (tab === "features") navigate({ to: "/w/$slug/p/$key/features", params });
     else if (tab === "meetings") navigate({ to: "/w/$slug/p/$key/meetings", params });
     else navigate({ to: "/w/$slug/p/$key", params });

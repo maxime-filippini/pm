@@ -1,3 +1,4 @@
+import { PullRequests } from "@/components/PullRequests";
 import { Viewing } from "@/components/Presence";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
 import { ActivityFeed } from "@/components/ActivityFeed";
@@ -112,6 +113,7 @@ export function TaskPage() {
         />
       </Card>
 
+      <PullRequests key={"pr-" + task.id} taskId={task.id} />
       <Comments key={task.id} target={{ type: "task", id: task.id }} />
       <ActivityFeed key={"activity-" + task.id} target={{ type: "task", id: task.id }} />
       <p className="text-xs text-muted-foreground">

@@ -1,5 +1,6 @@
 import type { Command } from "../../../shared/commands";
 import type { CommandContext } from "../context";
+import * as pr from "./pr";
 import * as comment from "./comment";
 import * as feature from "./feature";
 import * as meeting from "./meeting";
@@ -9,6 +10,10 @@ import * as topic from "./topic";
 
 export function apply(ctx: CommandContext, command: Command): void {
   switch (command.name) {
+    case "project.setGithubToken": return project.setGithubToken(ctx, command.args);
+    case "pr.link": return pr.link(ctx, command.args);
+    case "pr.unlink": return pr.unlink(ctx, command.args);
+    case "pr.refresh": return pr.requireTask(ctx, command.args.taskId);
     case "comment.create": return comment.create(ctx, command.args);
     case "comment.edit": return comment.edit(ctx, command.args);
     case "comment.delete": return comment.remove(ctx, command.args);
