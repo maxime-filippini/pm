@@ -1,7 +1,13 @@
 import { Link, useParams } from "@tanstack/react-router";
+import { ChevronRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { uuidv7 } from "../../shared/ids";
-import { Button, Card, Empty, Input } from "../components/ui";
+import { Empty } from "@/components/common";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
 
@@ -31,38 +37,41 @@ export function ProjectsPage() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        {list.length === 0 ? (
-          <Empty>No Projects yet.</Empty>
-        ) : (
-          <ul className="divide-y divide-neutral-800">
-            {list.map((p) => (
-              <li key={p.id}>
-                <Link to="/w/$slug/p/$key" params={{ slug, key: p.key }} className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/50">
-                  <span className="w-14 font-mono text-xs text-neutral-500">{p.key}</span>
-                  <span className="flex-1">{p.name}</span>
-                  {p.archivedAt !== null ? (
-                    <span className="text-xs text-neutral-500">Archived</span>
-                  ) : (
-                    <span className="text-xs text-neutral-500">{openCount(p.id)} open</span>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      {list.length === 0 ? (
+        <Empty>No Projects yet.</Empty>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {list.map((p) => (
+            <li key={p.id}>
+              <Link
+                to="/w/$slug/p/$key"
+                params={{ slug, key: p.key }}
+                className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3 text-sm transition-colors hover:bg-muted"
+              >
+                <span className="w-14 font-mono text-xs text-muted-foreground">{p.key}</span>
+                <span className="flex-1 font-medium">{p.name}</span>
+                {p.archivedAt !== null ? (
+                  <Badge variant="outline">Archived</Badge>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{openCount(p.id)} open</span>
+                )}
+                <ChevronRightIcon className="size-4 text-muted-foreground" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <form onSubmit={create} className="flex flex-wrap gap-2">
-        <Input value={key} onChange={(e) => setKey(e.target.value.toUpperCase())} placeholder="KEY" maxLength={6} className="w-24 font-mono" />
-        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New Project name" className="min-w-40 flex-1" />
-        <Button type="submit" variant="primary" disabled={!key || !name}>Create Project</Button>
+        <Input value={key} onChange={(e) => setKey(e.target.value.toUpperCase())} placeholder="KEY" maxLength={6} aria-label="Project key" className="h-9 w-24 font-mono" />
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New Project name" aria-label="Project name" className="h-9 min-w-40 flex-1" />
+        <Button type="submit" className="h-9" disabled={!key || !name}>Create Project</Button>
       </form>
 
-      <label className="flex items-center gap-2 text-sm text-neutral-400">
-        <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+      <Label className="flex items-center gap-2 font-normal text-muted-foreground">
+        <Checkbox checked={showArchived} onCheckedChange={(v) => setShowArchived(v === true)} />
         Show archived Projects
-      </label>
+      </Label>
     </div>
   );
 }

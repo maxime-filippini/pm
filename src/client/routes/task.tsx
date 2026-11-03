@@ -1,7 +1,14 @@
 import { Link, Navigate, useCanGoBack, useParams, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TASK_STATUSES, type TaskStatus } from "../../shared/entities";
-import { Card, Empty, Input, Select, STATUS_LABEL, Textarea } from "../components/ui";
+import { ArrowLeftIcon } from "lucide-react";
+import { Empty, STATUS_LABEL } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
 
@@ -30,12 +37,14 @@ export function TaskPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 text-sm text-neutral-500">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {/* Back returns to the list you came from (Tasks or My Tasks); a fresh tab falls back to Tasks. */}
         {canGoBack ? (
-          <button type="button" onClick={() => router.history.back()} className="-ml-2 rounded-md px-2 py-1 hover:bg-neutral-800 hover:text-neutral-100">← Back</button>
+          <Button variant="ghost" size="sm" className="-ml-2" onClick={() => router.history.back()}><ArrowLeftIcon /> Back</Button>
         ) : (
-          <Link to="/w/$slug/p/$key" params={{ slug, key: project.key }} className="-ml-2 rounded-md px-2 py-1 hover:bg-neutral-800 hover:text-neutral-100">← Tasks</Link>
+          <Button variant="ghost" size="sm" className="-ml-2" asChild>
+            <Link to="/w/$slug/p/$key" params={{ slug, key: project.key }}><ArrowLeftIcon /> Tasks</Link>
+          </Button>
         )}
         <span className="font-mono">{taskKey}</span>
       </div>
@@ -43,36 +52,36 @@ export function TaskPage() {
       <EditableText
         value={task.title}
         onSave={(title) => socket.send("task.update", { id: task.id, title })}
-        render={(p) => <Input {...p} className="text-lg font-semibold" />}
+        render={(p) => <Input {...p} aria-label="Title" className="h-10 font-heading text-lg font-semibold md:text-lg" />}
       />
 
-      <div className="flex flex-wrap gap-3 text-sm">
-        <label className="flex items-center gap-2">
-          <span className="text-neutral-500">Status</span>
-          <Select value={task.status} onChange={(e) => socket.send("task.setStatus", { id: task.id, status: e.target.value as TaskStatus })}>
-            {TASK_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-          </Select>
-        </label>
-        <label className="flex items-center gap-2">
-          <span className="text-neutral-500">Assignee</span>
-          <Select value={task.assigneeId ?? ""} onChange={(e) => socket.send("task.update", { id: task.id, assigneeId: e.target.value || null })}>
-            <option value="">Unassigned</option>
-            {assignable.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-          </Select>
-        </label>
+      <div className="flex flex-wrap gap-4 text-sm">
+        <Label className="gap-2 font-normal">
+          <span className="text-muted-foreground">Status</span>
+          <NativeSelect value={task.status} onChange={(e) => socket.send("task.setStatus", { id: task.id, status: e.target.value as TaskStatus })}>
+            {TASK_STATUSES.map((s) => <NativeSelectOption key={s} value={s}>{STATUS_LABEL[s]}</NativeSelectOption>)}
+          </NativeSelect>
+        </Label>
+        <Label className="gap-2 font-normal">
+          <span className="text-muted-foreground">Assignee</span>
+          <NativeSelect value={task.assigneeId ?? ""} onChange={(e) => socket.send("task.update", { id: task.id, assigneeId: e.target.value || null })}>
+            <NativeSelectOption value="">Unassigned</NativeSelectOption>
+            {assignable.map((m) => <NativeSelectOption key={m.id} value={m.id}>{m.name}</NativeSelectOption>)}
+          </NativeSelect>
+        </Label>
       </div>
 
-      <Card className="p-3">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">Description</h2>
+      <Card className="gap-2 px-4">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Description</h2>
         <EditableText
           value={task.description}
           onSave={(description) => socket.send("task.update", { id: task.id, description })}
-          render={(p) => <Textarea {...p} placeholder="Add a description…" />}
+          render={(p) => <Textarea {...p} placeholder="Add a description…" className="min-h-32" />}
           multiline
         />
       </Card>
 
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted-foreground">
         Created by {creator} on {new Date(task.createdAt).toLocaleString()}
         {task.completedAt && ` · Done ${new Date(task.completedAt).toLocaleString()}`}
       </p>

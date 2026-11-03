@@ -1,6 +1,16 @@
 import { Link, Outlet, useMatchRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { CheckIcon, ChevronsUpDownIcon, FolderIcon, ListTodoIcon } from "lucide-react";
 import { useMemo } from "react";
-import { cx } from "../components/ui";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "../store/workspace";
 import { WorkspaceProvider } from "../sync/context";
 
@@ -10,8 +20,8 @@ export function WorkspaceLayout() {
   const { key } = useParams({ strict: false });
   return (
     <WorkspaceProvider slug={slug}>
-      <nav className="sticky top-0 z-10 -mx-3 mb-5 flex items-center gap-1 border-b border-neutral-800 bg-neutral-950/95 px-3 py-2 text-sm backdrop-blur sm:-mx-4 sm:px-4">
-        <Link to="/" className="mr-1 shrink-0 px-1 font-semibold" title="All Workspaces">PM</Link>
+      <nav className="sticky top-0 z-10 -mx-3 mb-5 flex items-center gap-1 border-b bg-background/95 px-3 py-2 text-sm backdrop-blur sm:-mx-4 sm:px-4">
+        <Link to="/" className="mr-1 shrink-0 px-1 font-heading font-semibold" title="All Workspaces">PM</Link>
         {key ? <ProjectNav slug={slug} projectKey={key} /> : <WorkspaceNav slug={slug} />}
         <span className="flex-1" />
         <ConnectionBadge />
@@ -23,8 +33,8 @@ export function WorkspaceLayout() {
   );
 }
 
-const tab = "shrink-0 rounded-md px-3 py-2 text-neutral-400 hover:text-neutral-100 sm:py-1.5";
-const activeTab = "bg-neutral-800 text-neutral-100";
+const tab = "h-9 shrink-0 rounded-lg px-3 inline-flex items-center text-muted-foreground transition-colors hover:text-foreground sm:h-8";
+const activeTab = "bg-muted text-foreground";
 
 function WorkspaceNav({ slug }: { slug: string }) {
   return (
@@ -45,14 +55,11 @@ function ProjectNav({ slug, projectKey }: { slug: string; projectKey: string }) 
   return (
     <>
       <ProjectSwitcher slug={slug} projectKey={projectKey} keepMyTasks={onMyTasks} />
-      <Link to="/w/$slug/p/$key" params={{ slug, key: projectKey }} className={cx(tab, onTasks && activeTab)}>Tasks</Link>
-      <Link to="/w/$slug/p/$key/me" params={{ slug, key: projectKey }} className={cx(tab, onMyTasks && activeTab)}>My Tasks</Link>
+      <Link to="/w/$slug/p/$key" params={params} className={cn(tab, onTasks && activeTab)}>Tasks</Link>
+      <Link to="/w/$slug/p/$key/me" params={params} className={cn(tab, onMyTasks && activeTab)}>My Tasks</Link>
     </>
   );
 }
-
-const ALL_PROJECTS = "__all";
-const ALL_MY_TASKS = "__me";
 
 function ProjectSwitcher({ slug, projectKey, keepMyTasks }: { slug: string; projectKey: string; keepMyTasks: boolean }) {
   const navigate = useNavigate();
@@ -63,33 +70,43 @@ function ProjectSwitcher({ slug, projectKey, keepMyTasks }: { slug: string; proj
   );
   const current = options.find((p) => p.key === projectKey);
 
-  const go = (value: string) => {
-    if (value === ALL_PROJECTS) navigate({ to: "/w/$slug", params: { slug } });
-    else if (value === ALL_MY_TASKS) navigate({ to: "/w/$slug/me", params: { slug } });
-    else if (keepMyTasks) navigate({ to: "/w/$slug/p/$key/me", params: { slug, key: value } });
-    else navigate({ to: "/w/$slug/p/$key", params: { slug, key: value } });
-  };
+  const open = (key: string) =>
+    keepMyTasks ? navigate({ to: "/w/$slug/p/$key/me", params: { slug, key } }) : navigate({ to: "/w/$slug/p/$key", params: { slug, key } });
 
   return (
-    <label className="relative mr-1 flex min-w-0 shrink items-center gap-1 rounded-md px-2 py-2 font-medium hover:bg-neutral-800 sm:py-1.5">
-      <span className="font-mono text-xs text-neutral-500">{projectKey}</span>
-      <span className="max-w-[9rem] truncate sm:max-w-[16rem]">{current?.name ?? projectKey}</span>
-      <span aria-hidden className="text-neutral-500">▾</span>
-      {/* Native select: invisible over the label, so phones get the system picker. */}
-      <select aria-label="Switch Project" value={projectKey} onChange={(e) => go(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
-        {options.map((p) => <option key={p.id} value={p.key}>{p.key} · {p.name}</option>)}
-        <option disabled>──────────</option>
-        <option value={ALL_PROJECTS}>All Projects</option>
-        <option value={ALL_MY_TASKS}>My Tasks in every Project</option>
-      </select>
-    </label>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="mr-1 h-9 min-w-0 shrink px-2 sm:h-8" aria-label="Switch Project">
+          <span className="font-mono text-xs text-muted-foreground">{projectKey}</span>
+          <span className="max-w-[8rem] truncate sm:max-w-[16rem]">{current?.name ?? projectKey}</span>
+          <ChevronsUpDownIcon className="text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64">
+        <DropdownMenuLabel>Projects</DropdownMenuLabel>
+        {options.map((p) => (
+          <DropdownMenuItem key={p.id} onSelect={() => open(p.key)}>
+            <span className="w-12 font-mono text-xs text-muted-foreground">{p.key}</span>
+            <span className="flex-1 truncate">{p.name}</span>
+            {p.key === projectKey && <CheckIcon />}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate({ to: "/w/$slug", params: { slug } })}>
+          <FolderIcon /> All Projects
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate({ to: "/w/$slug/me", params: { slug } })}>
+          <ListTodoIcon /> My Tasks in every Project
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 function ConnectionBadge() {
   const status = useWorkspace((s) => s.status);
   const pending = useWorkspace((s) => s.pending.length);
-  if (status === "online") return pending > 0 ? <span className="shrink-0 text-xs text-neutral-500">Saving…</span> : null;
+  if (status === "online") return pending > 0 ? <span className="shrink-0 text-xs text-muted-foreground">Saving…</span> : null;
   const label = { connecting: "Connecting…", offline: "Reconnecting…", removed: "Removed from Workspace" }[status];
   return <span className="shrink-0 text-xs text-amber-400">{label}</span>;
 }
@@ -97,7 +114,7 @@ function ConnectionBadge() {
 function Gate({ children }: { children: React.ReactNode }) {
   const ready = useWorkspace((s) => s.memberId !== null);
   const status = useWorkspace((s) => s.status);
-  if (status === "removed") return <p className="text-neutral-400">You no longer have access to this Workspace.</p>;
-  if (!ready) return <p className="py-8 text-center text-sm text-neutral-500">Loading…</p>;
+  if (status === "removed") return <p className="text-muted-foreground">You no longer have access to this Workspace.</p>;
+  if (!ready) return <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>;
   return <>{children}</>;
 }

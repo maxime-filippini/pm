@@ -1,13 +1,19 @@
 import { Outlet, useParams } from "@tanstack/react-router";
+import { ArchiveIcon, ArchiveRestoreIcon, MoreHorizontalIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { TASK_STATUSES, type Project, type Task, type TaskStatus } from "../../shared/entities";
+import { TASK_STATUSES, type Task, type TaskStatus } from "../../shared/entities";
 import { uuidv7 } from "../../shared/ids";
-import { TaskRow } from "../components/TaskRow";
-import { Button, Card, cx, Empty, Input, Select, STATUS_LABEL } from "../components/ui";
+import { byRank } from "../../shared/rank";
+import { Empty, SectionHeading, ShowClosedToggle, STATUS_LABEL } from "@/components/common";
+import { SortableTaskList } from "@/components/SortableTaskList";
+import { TaskCard, TaskList } from "@/components/TaskCard";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { setLastProject } from "../last-project";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
-import { byRank, rankForMove, rankForReorder } from "../../shared/rank";
 
 /** Every page inside a Project renders here, under the Project nav in the top bar. */
 export function ProjectLayout() {
@@ -42,7 +48,7 @@ export function ProjectTasksPage() {
     return statuses.map((status) => ({ status, tasks: tasks.filter((t) => t.status === status) }));
   }, [allTasks, project, assignee, showClosed]);
 
-  if (!project) return <Empty>No Project with key {key}.</Empty>;
+  if (!project) return null;
   const archived = project.archivedAt !== null;
 
   const create = (e: React.FormEvent) => {
@@ -51,140 +57,70 @@ export function ProjectTasksPage() {
       setTitle("");
     }
   };
+  const reorder = (task: Task, rank: string) => socket.send("task.move", { id: task.id, rank });
 
   const activeMembers = Object.values(members).filter((m) => m.active).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-wrap items-center gap-3">
+      <header className="flex items-center gap-2">
         {renaming === null ? (
-          <h1 className="flex-1 text-xl font-semibold" onDoubleClick={() => setRenaming(project.name)}>{project.name}</h1>
+          <h1 className="min-w-0 flex-1 truncate font-heading text-xl font-semibold" onDoubleClick={() => setRenaming(project.name)}>{project.name}</h1>
         ) : (
           <form
             className="flex-1"
             onSubmit={(e) => {
               e.preventDefault();
-              socket.send("project.rename", { id: project.id, name: renaming });
+              if (renaming.trim()) socket.send("project.rename", { id: project.id, name: renaming });
               setRenaming(null);
             }}
           >
-            <Input autoFocus value={renaming} onChange={(e) => setRenaming(e.target.value)} onBlur={() => setRenaming(null)} />
+            <Input autoFocus value={renaming} onChange={(e) => setRenaming(e.target.value)} onBlur={() => setRenaming(null)} onKeyDown={(e) => e.key === "Escape" && setRenaming(null)} />
           </form>
         )}
-        <Button variant="ghost" onClick={() => setRenaming(project.name)}>Rename</Button>
-        <Button variant="ghost" onClick={() => socket.send(archived ? "project.unarchive" : "project.archive", { id: project.id })}>
-          {archived ? "Unarchive" : "Archive"}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Project actions"><MoreHorizontalIcon /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => setRenaming(project.name)}><PencilIcon /> Rename</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => socket.send(archived ? "project.unarchive" : "project.archive", { id: project.id })}>
+              {archived ? <><ArchiveRestoreIcon /> Unarchive</> : <><ArchiveIcon /> Archive</>}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
-      {archived && <p className="rounded-md bg-neutral-800 px-3 py-2 text-sm text-neutral-300">This Project is archived. Unarchive it to add Tasks.</p>}
+      {archived && <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">This Project is archived. Unarchive it to add Tasks.</p>}
 
       {!archived && (
         <form onSubmit={create} className="flex gap-2">
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New Task title" />
-          <Button type="submit" variant="primary" disabled={!title.trim()}>Add</Button>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="New Task title" className="h-9" />
+          <Button type="submit" className="h-9" disabled={!title.trim()}><PlusIcon /> Add</Button>
         </form>
       )}
 
-      <div className="flex flex-wrap items-center gap-3 text-sm">
-        <Select value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-          <option value="">Anyone</option>
-          {me && <option value={me}>Me</option>}
-          <option value="none">Unassigned</option>
-          {activeMembers.filter((m) => m.id !== me).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-        </Select>
-        <label className="flex items-center gap-2 text-neutral-400">
-          <input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} />
-          Show done and canceled
-        </label>
+      <div className="flex flex-wrap items-center gap-4 text-sm">
+        <NativeSelect value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assignee filter">
+          <NativeSelectOption value="">Anyone</NativeSelectOption>
+          {me && <NativeSelectOption value={me}>Me</NativeSelectOption>}
+          <NativeSelectOption value="none">Unassigned</NativeSelectOption>
+          {activeMembers.filter((m) => m.id !== me).map((m) => <NativeSelectOption key={m.id} value={m.id}>{m.name}</NativeSelectOption>)}
+        </NativeSelect>
+        <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
       </div>
 
       {groups.map(({ status, tasks }) => (
-        <TaskGroup key={status} slug={slug} project={project} status={status} tasks={tasks} onReorder={reorder} />
+        <section key={status} className="space-y-2">
+          <SectionHeading count={tasks.length}>{STATUS_LABEL[status]}</SectionHeading>
+          {tasks.length === 0 ? (
+            <p className="rounded-lg border border-dashed px-3 py-2.5 text-sm text-muted-foreground">Nothing here.</p>
+          ) : (
+            <SortableTaskList slug={slug} project={project} tasks={tasks} onReorder={reorder} />
+          )}
+        </section>
       ))}
     </div>
-  );
-
-  function reorder(rank: string | null, task: Task) {
-    if (rank) socket.send("task.move", { id: task.id, rank });
-  }
-}
-
-type DragState = { from: number; slot: number | null };
-
-/** One status section. Drag to reorder with a mouse; up/down buttons on touch screens. */
-function TaskGroup({ slug, project, status, tasks, onReorder }: {
-  slug: string;
-  project: Project;
-  status: TaskStatus;
-  tasks: Task[];
-  onReorder: (rank: string | null, task: Task) => void;
-}) {
-  const [drag, setDrag] = useState<DragState | null>(null);
-  // Slots are gaps between rows (0 = above the first). The two around the dragged row don't move it.
-  const movesTo = (d: DragState) => (d.slot === null || d.slot === d.from || d.slot === d.from + 1 ? null : d.slot > d.from ? d.slot - 1 : d.slot);
-  const target = drag ? movesTo(drag) : null;
-
-  const rowProps = (i: number): React.LiHTMLAttributes<HTMLLIElement> => ({
-    draggable: true,
-    onDragStart: (e) => {
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", tasks[i]!.id);
-      setDrag({ from: i, slot: null });
-    },
-    onDragOver: (e) => {
-      if (!drag) return; // Dragging from another section: not a drop target.
-      e.preventDefault();
-      const box = e.currentTarget.getBoundingClientRect();
-      const slot = e.clientY < box.top + box.height / 2 ? i : i + 1;
-      if (slot !== drag.slot) setDrag({ ...drag, slot });
-    },
-    onDrop: (e) => {
-      e.preventDefault();
-      if (drag && target !== null) onReorder(rankForReorder(tasks, drag.from, target), tasks[drag.from]!);
-      setDrag(null);
-    },
-    onDragEnd: () => setDrag(null),
-    className: cx(
-      "group pointer-fine:cursor-grab",
-      drag?.from === i && "opacity-40",
-      target !== null && drag?.slot === i && "shadow-[inset_0_2px_0_0_var(--color-indigo-400)]",
-      target !== null && drag?.slot === i + 1 && i === tasks.length - 1 && "shadow-[inset_0_-2px_0_0_var(--color-indigo-400)]",
-    ),
-  });
-
-  return (
-    <section className="space-y-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-        {STATUS_LABEL[status]} <span className="font-normal">{tasks.length}</span>
-      </h2>
-      <Card>
-        {tasks.length === 0 ? (
-          <p className="px-3 py-2 text-sm text-neutral-600">Nothing here.</p>
-        ) : (
-          <ul className="divide-y divide-neutral-800">
-            {tasks.map((task, i) => (
-              <TaskRow
-                key={task.id}
-                slug={slug}
-                task={task}
-                project={project}
-                rowProps={rowProps(i)}
-                actions={
-                  <>
-                    <span aria-hidden className="hidden select-none text-neutral-600 opacity-0 group-hover:opacity-100 pointer-fine:inline" title="Drag to reorder">⠿</span>
-                    <span className="flex pointer-fine:hidden">
-                      <MoveButton label="Move up" disabled={i === 0} onClick={() => onReorder(rankForMove(tasks, i, -1), task)}>↑</MoveButton>
-                      <MoveButton label="Move down" disabled={i === tasks.length - 1} onClick={() => onReorder(rankForMove(tasks, i, 1), task)}>↓</MoveButton>
-                    </span>
-                  </>
-                }
-              />
-            ))}
-          </ul>
-        )}
-      </Card>
-    </section>
   );
 }
 
@@ -207,31 +143,16 @@ export function ProjectMyTasksPage() {
 
   return (
     <div className="space-y-5">
-      <label className="flex items-center gap-2 text-sm text-neutral-400">
-        <input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} />
-        Show done and canceled
-      </label>
+      <ShowClosedToggle checked={showClosed} onChange={setShowClosed} />
       {groups.length === 0 && <Empty>Nothing assigned to you in {project.name}.</Empty>}
       {groups.map(({ status, tasks }) => (
         <section key={status} className="space-y-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-            {STATUS_LABEL[status]} <span className="font-normal">{tasks.length}</span>
-          </h2>
-          <Card>
-            <ul className="divide-y divide-neutral-800">
-              {tasks.map((t) => <TaskRow key={t.id} slug={slug} task={t} project={project} />)}
-            </ul>
-          </Card>
+          <SectionHeading count={tasks.length}>{STATUS_LABEL[status]}</SectionHeading>
+          <TaskList>
+            {tasks.map((t) => <TaskCard key={t.id} slug={slug} task={t} project={project} />)}
+          </TaskList>
         </section>
       ))}
     </div>
-  );
-}
-
-function MoveButton({ label, disabled, onClick, children }: { label: string; disabled: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" aria-label={label} title={label} disabled={disabled} onClick={onClick} className="rounded px-2.5 py-1 text-neutral-500 hover:bg-neutral-800 hover:text-neutral-100 disabled:invisible">
-      {children}
-    </button>
   );
 }

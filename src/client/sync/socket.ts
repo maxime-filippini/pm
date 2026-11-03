@@ -2,7 +2,7 @@ import { parseCommand, type Command } from "../../shared/commands";
 import { uuidv7 } from "../../shared/ids";
 import type { ServerMessage } from "../../shared/protocol";
 import { useWorkspace, workspaceActions } from "../store/workspace";
-import { toast } from "../store/toasts";
+import { toast } from "sonner";
 
 const PING_EVERY_MS = 30_000;
 const MAX_MISSED_PONGS = 2;
@@ -31,7 +31,7 @@ export class WorkspaceSocket {
   send<N extends Command["name"]>(name: N, args: Extract<Command, { name: N }>["args"]): boolean {
     const parsed = parseCommand(name, args);
     if (!parsed.ok) {
-      toast(parsed.message);
+      toast.error(parsed.message);
       return false;
     }
     const id = uuidv7();
@@ -122,7 +122,7 @@ export class WorkspaceSocket {
         return workspaceActions.removePending(message.id);
       case "reject":
         workspaceActions.removePending(message.id);
-        return toast(message.error.message);
+        return void toast.error(message.error.message);
       case "result":
       case "result_error": {
         const waiter = this.queries.get(message.id);
