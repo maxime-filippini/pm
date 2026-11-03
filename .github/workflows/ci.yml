@@ -2,18 +2,22 @@ name: CI
 
 on:
   push:
-    branches: [master]
-  pull_request:
+    branches: ["**"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Conventional branch name and commits
+        if: github.ref != 'refs/heads/master'
+        run: bash scripts/check-conventions.sh "${GITHUB_REF_NAME}" origin/master
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -24,9 +28,33 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  # Feature branches share one preview (ADR 0005): latest push wins.
+  deploy-preview:
+    needs: check
+    if: github.ref != 'refs/heads/master'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-preview
+      cancel-in-progress: true
+    environment:
+      name: preview
+      url: https://pm-preview.maximefilippini.me
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build, migrate preview D1, deploy pm-preview
+        run: pnpm run deploy:preview
+
   deploy:
     needs: check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-production

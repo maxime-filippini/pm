@@ -9,7 +9,10 @@ Work breakdown for [`spec.md`](./spec.md), ordered by milestone (§11). Tick box
 - [x] Custom domain `pm.maximefilippini.me`; `workers_dev` and preview URLs off
 - [x] First manual deploy; Access in front of the hostname
 - [x] GitHub Actions: typecheck + test on every push/PR, deploy on push to `master` (D1 migrations, then `wrangler deploy`)
-- [x] `CLOUDFLARE_API_TOKEN` repo secret set (needs **D1 → Edit** on top of the Workers template)
+- [x] `CLOUDFLARE_API_TOKEN` repo secret set (account id is in `wrangler.jsonc`)
+- [x] Shared preview `pm-preview.maximefilippini.me` deployed from every non-`master` branch (ADR 0005)
+- [ ] Add `pm-preview.maximefilippini.me` to the Access application (user)
+- [x] CI checks Conventional Commits and branch names
 
 ## M1: Foundation
 
