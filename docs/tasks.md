@@ -11,7 +11,7 @@ Work breakdown for [`spec.md`](./spec.md), grouped by milestone (§11). A checke
 - [x] GitHub Actions: typecheck + test on every push/PR, deploy on push to `master` (D1 migrations, then `wrangler deploy`)
 - [x] `CLOUDFLARE_API_TOKEN` repo secret set (account id is in `wrangler.jsonc`)
 - [x] Shared preview `pm-preview.maximefilippini.me` deployed from every non-`master` branch (ADR 0005)
-- [ ] Add `pm-preview.maximefilippini.me` to the Access application (user)
+- [x] Preview hostname requires Access login (unauthenticated browser redirect verified 2026-11-03; dashboard policy editing was not needed)
 - [x] CI checks Conventional Commits and branch names
 
 ## M1: Foundation
@@ -84,7 +84,9 @@ Topics and Meetings are per Project (a "Meetings" tab next to Tasks / My Tasks).
 
 ## Delivery polish
 
-- [ ] Route-based code splitting: reduce the initial bundle and verify navigation/loading/error states (handoff step 9)
+- [x] Page headings, explanations and named sections across Workspaces, administration, Tasks, Features, Meetings, settings and discussion
+
+- [x] Route-based code splitting: reduce the initial bundle and verify navigation/loading/error states (handoff step 9)
 
 ## M4: GitHub
 - [x] AES-GCM encrypt/decrypt; `project.setGithubToken` (clears `fetch_error`s), `hasGithubToken`

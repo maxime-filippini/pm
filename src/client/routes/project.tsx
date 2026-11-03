@@ -1,28 +1,19 @@
+import { SortableTaskList } from "@/components/SortableTaskList";
 import { PageHeader, SectionHeader } from "@/components/PageHeader";
-import { Outlet, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { ArchiveIcon, ArchiveRestoreIcon, MoreHorizontalIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { TASK_STATUSES, type Task, type TaskStatus } from "../../shared/entities";
 import { uuidv7 } from "../../shared/ids";
 import { byRank } from "../../shared/rank";
 import { Empty, SectionHeading, ShowClosedToggle, STATUS_LABEL } from "@/components/common";
-import { SortableTaskList, TaskCard, TaskList } from "@/components/TaskCard";
+import { TaskCard, TaskList } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { setLastProject } from "../last-project";
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
-
-/** Every page inside a Project renders here, under the Project nav in the top bar. */
-export function ProjectLayout() {
-  const { slug, key } = useParams({ from: "/w/$slug/p/$key" });
-  const exists = useWorkspace((s) => Object.values(s.view.projects).some((p) => p.key === key));
-  useEffect(() => setLastProject(slug, exists ? key : null), [slug, key, exists]);
-  if (!exists) return <Empty>No Project with key {key}.</Empty>;
-  return <Outlet />;
-}
 
 const useProject = (key: string) => useWorkspace((s) => Object.values(s.view.projects).find((p) => p.key === key));
 

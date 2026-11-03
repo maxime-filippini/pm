@@ -1,3 +1,4 @@
+import { FEATURE_LABEL, FeatureDonePrompt } from "@/components/FeatureProgress";
 import { PageHeader, SectionHeader } from "@/components/PageHeader";
 import { Viewing } from "@/components/Presence";
 import { Markdown, MarkdownInput } from "@/components/Markdown";
@@ -5,7 +6,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { Comments } from "@/components/Comments";
 import { Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import { FEATURE_STATUSES, type Feature, type FeatureStatus } from "../../shared/entities";
+import { FEATURE_STATUSES, type FeatureStatus } from "../../shared/entities";
 import { uuidv7 } from "../../shared/ids";
 import { byRank } from "../../shared/rank";
 import { Empty } from "@/components/common";
@@ -17,19 +18,6 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { useWorkspace } from "../store/workspace";
 import { useSocket } from "../sync/context";
 import { EditableText } from "@/components/EditableText";
-
-export const FEATURE_LABEL: Record<FeatureStatus, string> = { proposed: "Proposed", accepted: "Accepted", rejected: "Rejected", done: "Done" };
-
-export function FeatureDonePrompt({ feature }: { feature: Feature }) {
-  const socket = useSocket();
-  const tasks = useWorkspace((s) => s.view.tasks);
-  const linked = Object.values(tasks).filter((t) => t.featureId === feature.id);
-  if (feature.status !== "accepted" || linked.length === 0 || linked.some((t) => t.status === "todo" || t.status === "in_progress")) return null;
-  return <div className="flex flex-wrap items-center gap-2 rounded-md bg-muted p-3 text-sm">
-    <span>All linked Tasks are done or canceled. Mark Feature done?</span>
-    <Button size="sm" onClick={() => socket.send("feature.setStatus", { id: feature.id, status: "done" })}>Mark done</Button>
-  </div>;
-}
 
 export function FeaturesPage() {
   const { slug, key } = useParams({ from: "/w/$slug/p/$key/features" });

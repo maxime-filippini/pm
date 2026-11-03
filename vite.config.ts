@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  build: { manifest: true },
   plugins: [react(), tailwindcss(), cloudflare()],
   resolve: { alias: { "@": fileURLToPath(new URL("./src/client", import.meta.url)) } },
 });
